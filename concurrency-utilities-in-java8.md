@@ -459,6 +459,15 @@ public class MapReducer<T> extends CountedCompleter<T> {
 
 
 
+## 他に追加されたもの
+
+* DoubleAccumulator
+* DoubleAdder
+* LongAccumulator
+* LongAdder
+
+
+
 並行処理は楽しいけど難しい。
 
 
