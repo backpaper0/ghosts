@@ -31,11 +31,11 @@ Aの完了を待機してBを起動する。
 ```java
 ExecutorService executor = ...
 
-Future<T> futureA = executor.submit(() -> ... );
+Future<T> futureA = executor.submit(() -> { ... });
 
 T resultA = futureA.get(); //ブロック
 
-Future<T> futureB = executor.submit(() -> ... );
+Future<T> futureB = executor.submit(() -> { ... });
 ```
 
 
@@ -49,7 +49,7 @@ ExecutorService executor = ...
 Future<T> futureA = executor.submit(() -> {
     ...
 
-    Future<T> futureB = executor.submit(() -> ... );
+    Future<T> futureB = executor.submit(() -> { ... });
 });
 ```
 
@@ -63,9 +63,9 @@ Future<T> futureA = executor.submit(() -> {
 ### CompletableFutureでの実装例
 
 ```java
-CompletableFuture<Void> futureA = CompletableFuture.runAsync(() -> ... );
+CompletableFuture<Void> futureA = CompletableFuture.runAsync(() -> { ... });
 
-CompletableFuture<Void> futureB = futureA.thenRun(() -> ... );
+CompletableFuture<Void> futureB = futureA.thenRun(() -> { ... });
 ```
 
 
@@ -108,7 +108,7 @@ Future<T> futureC = exec.submit(() -> {
     ...
 });
 
-Future<T> futureD = exec.submit(() -> ... );
+Future<T> futureD = exec.submit(() -> { ... });
 
 Future<T> futureE = exec.submit(() -> {
     T c = futureC.get(); //ブロック
@@ -121,15 +121,15 @@ Future<T> futureE = exec.submit(() -> {
 ### CompletableFutureでの実装例
 
 ```java
-CompletionStage<T> futureA = CompletableFuture.supplyAsync(() -> ... );
+CompletionStage<T> futureA = CompletableFuture.supplyAsync(() -> { ... });
 
-CompletionStage<T> futureB = CompletableFuture.supplyAsync(() -> ... );
+CompletionStage<T> futureB = CompletableFuture.supplyAsync(() -> { ... });
 
-CompletionStage<T> futureC = futureA.applyToEitherAsync(futureB, ab -> ... );
+CompletionStage<T> futureC = futureA.applyToEitherAsync(futureB, ab -> { ... });
 
-CompletionStage<T> futureD = CompletableFuture.supplyAsync(() -> ... );
+CompletionStage<T> futureD = CompletableFuture.supplyAsync(() -> { ... });
 
-CompletionStage<T> futureE = futureC.thenCombineAsync(futureD, (a, b) -> ... );
+CompletionStage<T> futureE = futureC.thenCombineAsync(futureD, (a, b) -> { ... });
 ```
 
 
@@ -166,19 +166,19 @@ CompletableFuture future = ...
 CompletableFuture other = ...
 
 //ステージが正常に完了した( A )
-future.thenApply(t -> ... );
+future.thenApply(t -> { ... });
 
 //ふたつのステージの内どちらかが正常に完了した( B )
-future.applyToEither(other, t -> ... );
+future.applyToEither(other, t -> { ... });
 
 //ふたつのステージが両方とも正常に完了した( C )
-future.thenCombine(other, (t, u) -> ... );
+future.thenCombine(other, (t, u) -> { ... });
 
 //ステージが正常に完了または例外を投げた( D )
-future.handle((t, e) -> ... );
+future.handle((t, e) -> { ... });
 
 //ステージが例外を投げた( E )
-future.exceptionally(e -> ... );
+future.exceptionally(e -> { ... });
 ```
 
 
@@ -195,10 +195,10 @@ future.exceptionally(e -> ... );
 CompletableFuture<T> future = ...
 
 //デフォルトの実行
-future.thenApply(t -> ...);
+future.thenApply(t -> { ... });
 
 //非同期実行(メソッド名のsuffixが Async)
-future.thenApplyAsync(t -> ...);
+future.thenApplyAsync(t -> { ... });
 
 //Executorを指定(メソッド名のsuffixが Async で Executor を渡せる)
 future.thenApplyAsync(t -> { ... }, executor);
