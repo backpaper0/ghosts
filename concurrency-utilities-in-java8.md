@@ -121,15 +121,20 @@ Future<T> futureE = exec.submit(() -> {
 ### CompletableFutureでの実装例
 
 ```java
-CompletableFuture<T> futureA = CompletableFuture.supplyAsync(() -> { ... });
+CompletableFuture<T> futureA =
+        CompletableFuture.supplyAsync(() -> { ... });
 
-CompletableFuture<T> futureB = CompletableFuture.supplyAsync(() -> { ... });
+CompletableFuture<T> futureB =
+        CompletableFuture.supplyAsync(() -> { ... });
 
-CompletableFuture<T> futureC = futureA.applyToEitherAsync(futureB, ab -> { ... });
+CompletableFuture<T> futureC =
+        futureA.applyToEitherAsync(futureB, ab -> { ... });
 
-CompletableFuture<T> futureD = CompletableFuture.supplyAsync(() -> { ... });
+CompletableFuture<T> futureD =
+        CompletableFuture.supplyAsync(() -> { ... });
 
-CompletableFuture<T> futureE = futureC.thenCombineAsync(futureD, (a, b) -> { ... });
+CompletableFuture<T> futureE =
+        futureC.thenCombineAsync(futureD, (a, b) -> { ... });
 ```
 
 
@@ -229,8 +234,11 @@ CompletableFuture<T> future = CompletableFuture.supplyAsync(() -> t);
 
 ```java
 CompletableFuture<T> future1 = ...
+
 CompletableFuture<T> future2 = ...
+
 CompletableFuture<T> future3 = ...
+
 CompletableFuture<Void> future4 =
         CompletableFuture.allOf(future1, future2, future3);
 ```
@@ -242,8 +250,11 @@ CompletableFuture<Void> future4 =
 
 ```java
 CompletableFuture<T> future1 = ...
+
 CompletableFuture<T> future2 = ...
+
 CompletableFuture<T> future3 = ...
+
 CompletableFuture<Void> future4 =
         CompletableFuture.anyOf(future1, future2, future3);
 ```
