@@ -223,6 +223,32 @@ CompletableFuture<T> future = CompletableFuture.supplyAsync(() -> t);
 `runAsync` と `supplyAsync` は `Executor` を渡すメソッドもある。
 
 
+### その他のユーティリティ(1)
+
+全てのアクションが完了したときに完了する `CompletableFuture` を返す。
+
+```java
+CompletableFuture<T> future1 = ...
+CompletableFuture<T> future2 = ...
+CompletableFuture<T> future3 = ...
+CompletableFuture<Void> future4 =
+        CompletableFuture.allOf(future1, future2, future3);
+```
+
+
+### その他のユーティリティ(2)
+
+いずれかのアクションが完了したときに完了する `CompletableFuture` を返す。
+
+```java
+CompletableFuture<T> future1 = ...
+CompletableFuture<T> future2 = ...
+CompletableFuture<T> future3 = ...
+CompletableFuture<Void> future4 =
+        CompletableFuture.anyOf(future1, future2, future3);
+```
+
+
 CompletableFutureは、
 
 * ひとつのアクションは小さくする
