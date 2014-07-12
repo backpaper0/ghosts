@@ -121,19 +121,19 @@ Future<T> futureE = exec.submit(() -> {
 ### CompletableFutureでの実装例
 
 ```java
-CompletionStage<T> futureA = CompletableFuture.supplyAsync(() -> { ... });
+CompletableFuture<T> futureA = CompletableFuture.supplyAsync(() -> { ... });
 
-CompletionStage<T> futureB = CompletableFuture.supplyAsync(() -> { ... });
+CompletableFuture<T> futureB = CompletableFuture.supplyAsync(() -> { ... });
 
-CompletionStage<T> futureC = futureA.applyToEitherAsync(futureB, ab -> { ... });
+CompletableFuture<T> futureC = futureA.applyToEitherAsync(futureB, ab -> { ... });
 
-CompletionStage<T> futureD = CompletableFuture.supplyAsync(() -> { ... });
+CompletableFuture<T> futureD = CompletableFuture.supplyAsync(() -> { ... });
 
-CompletionStage<T> futureE = futureC.thenCombineAsync(futureD, (a, b) -> { ... });
+CompletableFuture<T> futureE = futureC.thenCombineAsync(futureD, (a, b) -> { ... });
 ```
 
 
-CompletionStageは完了や例外をトリガーとして後続のアクションを実行する。
+CompletableFutureは完了や例外をトリガーとして後続のアクションを実行する。
 
 
 ### トリガー
