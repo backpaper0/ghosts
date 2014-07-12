@@ -63,9 +63,9 @@ Future<T> futureA = executor.submit(() -> {
 ### CompletableFutureでの実装例
 
 ```java
-CompletableFuture<T> futureA = CompletableFuture.supplyAsync(() -> ... );
+CompletableFuture<Void> futureA = CompletableFuture.runAsync(() -> ... );
 
-CompletableFuture<T> futureB = futureA.thenApply(a -> ... );
+CompletableFuture<Void> futureB = futureA.thenRun(() -> ... );
 ```
 
 
