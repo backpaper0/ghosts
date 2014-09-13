@@ -72,7 +72,6 @@ public class HelloResource {
 * セミコロン要らない
 * アノテーションに@要らない
 * importで別名付けられる
-* public付けなくてもpublic
 * 型推論効く
 * メソッド一行で書ける
 * 他にもいろいろ
@@ -83,7 +82,7 @@ public class HelloResource {
 
 ```
 ApplicationPath("rest")
-class HelloApplication : Application() 
+public class HelloApplication : Application() 
 ```
 
 
@@ -92,7 +91,7 @@ class HelloApplication : Application()
 
 ```kotlin
 Path("hello")
-class HelloResource {
+public class HelloResource {
 
   Context
   var uriInfo : UriInfo? = null
@@ -119,7 +118,7 @@ class HelloResource {
 
 ```kotlin
 Path("hello")
-class HelloResource(
+public class HelloResource(
     Context val uriInfo : UriInfo
   ) {
 
@@ -291,7 +290,7 @@ public class ValueObject3ConverterProvider implements ParamConverterProvider {
 ## をKotlinで
 
 ```kotlin
-trait ValueObject3 {
+public trait ValueObject3 {
 
   val value: String
 }
@@ -302,7 +301,7 @@ trait ValueObject3 {
 ## インターフェース実装クラス
 
 ```kotlin
-class ValueObject3Impl(
+public class ValueObject3Impl(
     override val value: String
   ) : ValueObject3
 ```
@@ -312,7 +311,7 @@ class ValueObject3Impl(
 ## ParamConverter実装クラス
 
 ```kotlin
-class ValueObject3Converter : ParamConverter<ValueObject3> {
+public class ValueObject3Converter : ParamConverter<ValueObject3> {
 
   override fun fromString(value: String?): ValueObject3 = ValueObject3Impl(value!!)
 
@@ -326,7 +325,7 @@ class ValueObject3Converter : ParamConverter<ValueObject3> {
 
 ```kotlin
 Provider
-class ValueObject3ConverterProvider : ParamConverterProvider {
+public class ValueObject3ConverterProvider : ParamConverterProvider {
 
   override fun <T> getConverter(rawType: Class<T>?,
             genericType: Type?, annotations: Array<out Annotation>?): ParamConverter<T>? {
@@ -406,7 +405,7 @@ NameBinding
 Retention(RetentionPolicy.RUNTIME)
 //アノテーションの要素に配列を設定する方法が分からない。(trsn)
 //Target(array(ElementType.TYPE, ElementType.METHOD))
-annotation class Greedy
+public annotation class Greedy
 ```
 
 
@@ -416,7 +415,7 @@ annotation class Greedy
 ```kotlin
 Provider
 Greedy
-class GreedyFilter : ContainerRequestFilter {
+public class GreedyFilter : ContainerRequestFilter {
 
   override fun filter(requestContext: ContainerRequestContext?): Unit {
     val paid = requestContext!!.getHeaderString("payment")
@@ -434,7 +433,7 @@ class GreedyFilter : ContainerRequestFilter {
 ```kotlin
 Greedy
 Path("CuteGirl")
-class CuteGirlResource {
+public class CuteGirlResource {
 
   Path("Smile")
   GET
@@ -470,7 +469,7 @@ class CuteGirlResource {
 ## Data Class
 
 ```kotlin
-data class Point(val x: Int, val y: Int)
+public data class Point(val x: Int, val y: Int)
 ```
 
 
@@ -518,7 +517,7 @@ println("p1=$p1 p2=$p2 p3=$p3 x=$x y=$y")
 ## パラメータのデフォルト値
 
 ```kotlin
-class Hello {
+public class Hello {
   fun say(name: String = "world") = "Hello, $name!"
 }
 ```
