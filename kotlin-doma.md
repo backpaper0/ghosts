@@ -8,30 +8,26 @@
 
 ### 趣旨
 
-KotlinでPluggable Annotation Processing APIを利用してDomaを使ってみよう！
+KotlinでDomaを使ってみよう！
 
 
 
-### Pluggable Annotation Processing APIとは
+### [Doma](http://doma.readthedocs.org/)とは
 
-* [JSR 269](https://jcp.org/en/jsr/detail?id=269)
-* アノテーションを元にしてコンパイル時に色々できるやつ
-* [Doma](http://doma.readthedocs.org/),
-  [Lombok](https://projectlombok.org/),
-  [Dagger](http://square.github.io/dagger/)
-  などで使用されている
-
-
-
-### Domaとは
-
-* "Domain Oriented Database Mapping Framework for Java 8"
 * Java 8で動作するDBアクセスフレームワーク
-* Pluggable Annotation Processing APIを利用してコンパイル時にコードの生成や検証を行う
+* 依存ライブラリが無い
+* [Pluggable Annotation Processing API](https://jcp.org/en/jsr/detail?id=269)を利用してコンパイル時にコードの生成や検証を行う
+* Pluggable Annotation Processing APIは他には[Lombok](https://projectlombok.org/)や[Dagger](http://square.github.io/dagger/)などで使用されている
+
+
+
+### Domaを簡単にご紹介
 
 
 
 ### エンティティ
+
+テーブルや検索結果をマッピングするやつ。
 
 ```
 @Entity
@@ -51,6 +47,8 @@ public class Book {
 
 ### Daoインターフェース
 
+SQL投げて結果を返すやつ。
+
 ```
 @Dao
 public interface BookDao {
@@ -65,7 +63,9 @@ public interface BookDao {
 
 ### SQLファイル
 
-* `META-INF/app/dao/BookDao/select.sql`
+主にSELECT文で使う。
+Daoのメソッドに対応したパスに置く。
+例えば `META-INF/app/dao/BookDao/select.sql`
 
 ```
 SELECT /*%expand*/*
@@ -112,6 +112,8 @@ public class Isbn {
 
 ### エンティティでドメインクラスを使う
 
+フィールドに使用できる。
+
 ```
 @Entity
 public class Book {
@@ -128,6 +130,9 @@ public class Book {
 
 
 ### Daoでドメインクラスを使う
+
+メソッドの引数や戻り値に使える。
+(この例は引数だけ)
 
 ```
 @Dao
@@ -168,7 +173,15 @@ List<Book> select(Title title, Author author);
 List<Book> select(String title, String author);
 ```
 
-ドメインクラスを使用していると `dao.select(author, title)` はコンパイルエラーになる。
+ドメインクラスを使用していると
+
+```
+dao.select(author, title); //引数が逆
+```
+
+はコンパイルエラーになる。
+
+(どちらも`String`ならコンパイルエラーにならない)
 
 
 
@@ -184,6 +197,14 @@ List<Book> select(String title, String author);
 @Select
 Optional<Book> select(Isbn isbn);
 ``` 
+
+Stream検索は次のように使う。
+
+```
+Optional<Book> book = dao.select(stream -> stream.findFirst());
+
+List<Book> books = dao.select(Collectors.toList());
+```
 
 
 
