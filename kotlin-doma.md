@@ -328,10 +328,23 @@ public interface BookDao {
 * 少なくとも1つ注釈処理が動くJavaコード(エンティティクラスとかドメインクラス)が無いとkapt動いてくれない
 * 注釈処理で取得できる引数名が `arg0`, `arg1` ... になる(SQLファイルで参照するとき死ぬ。
   ```
+  /** 理想 */
+  SELECT * FROM book WHERE isbn = /* isbn */'dummy'
+  ```
+
+  ```
+  /** 現実 */
   SELECT * FROM book WHERE isbn = /* arg0 */'dummy'
   ```
   あとイミュータブルなエンティティが実質的に作れない)
   ```
+  //理想
+  Entity(immutable = true)
+  public class Book(Id val isbn: Isbn, val title: Title)
+  ```
+
+  ```
+  //現実
   Entity(immutable = true)
   public class Book(Id val arg0: Isbn, val arg1: Title)
   ```
