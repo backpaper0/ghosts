@@ -281,6 +281,10 @@ dependencies {
 
 
 
+### KotlinでDomaを使うとどういう感じになるのか見てみる
+
+
+
 ### Kotlinでエンティティ
 
 ```
@@ -307,6 +311,8 @@ Domain(valueType = String::class)
 public class Isbn(val value: String)
 ```
 
+短くなった！
+
 
 
 ### KotlinでDaoクラス
@@ -320,6 +326,8 @@ public interface BookDao {
 
 }
 ```
+
+(´-`).oO(あんまり変わらん)
 
 
 
