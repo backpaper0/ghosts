@@ -17,7 +17,7 @@ KotlinでDomaを使ってみよう！
 * Java 8で動作するDBアクセスフレームワーク
 * 依存ライブラリが無い
 * [Pluggable Annotation Processing API](https://jcp.org/en/jsr/detail?id=269)を利用してコンパイル時にコードの生成や検証を行う
-* Pluggable Annotation Processing APIは他には[Lombok](https://projectlombok.org/)や[Dagger](http://square.github.io/dagger/)などで使用されている
+* Pluggable Annotation Processing APIは他には[AndroidAnnotations](http://androidannotations.org/)や[Lombok](https://projectlombok.org/)、[Dagger](http://square.github.io/dagger/)などで使用されている
 
 
 
@@ -258,13 +258,19 @@ List<Book> books = dao.select(Collectors.toList());
 
 
 
+### kaptの仕組み
+
+TODO コード読んで概ねどんな感じで動作するのか説明したい
+
+
+
 ### Gradleでkaptを使う設定
 
 ```
 buildscript {
     repositories.jcenter()
     dependencies {
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:0.12.1230'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:0.13.1513'
     }
 }
 
@@ -273,7 +279,7 @@ apply plugin: 'kotlin'
 repositories.jcenter()
 
 dependencies {
-    compile 'org.jetbrains.kotlin:kotlin-stdlib:0.12.1230'
+    compile 'org.jetbrains.kotlin:kotlin-stdlib:0.13.1513'
     compile 'org.seasar.doma:doma:2.4.1'
     kapt 'org.seasar.doma:doma:2.4.1'
 }
