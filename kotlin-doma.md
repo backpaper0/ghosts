@@ -15,9 +15,11 @@ KotlinでDomaを使ってみよう！
 ### [Doma](http://doma.readthedocs.org/)とは
 
 * Java 8で動作するDBアクセスフレームワーク
-* 依存ライブラリが無い
 * [Pluggable Annotation Processing API](https://jcp.org/en/jsr/detail?id=269)を利用してコンパイル時にコードの生成や検証を行う
 * Pluggable Annotation Processing APIは他には[AndroidAnnotations](http://androidannotations.org/)や[Lombok](https://projectlombok.org/)、[Dagger](http://square.github.io/dagger/)などで使用されている
+* カラムを好きなクラスにマッピングできる
+* 2-way SQL
+* 依存ライブラリが無い
 
 
 
@@ -25,7 +27,7 @@ KotlinでDomaを使ってみよう！
 
 
 
-### エンティティ
+### [エンティティクラス](http://doma.readthedocs.org/ja/stable/entity/)
 
 テーブルや検索結果をマッピングするやつ。
 
@@ -45,7 +47,7 @@ public class Book {
 
 
 
-### Daoインターフェース
+### [DAOインターフェース](http://doma.readthedocs.org/ja/stable/dao/)
 
 SQL投げて結果を返すやつ。
 
@@ -56,15 +58,17 @@ public interface BookDao {
     @Select
     List<Book> select(String title, String author);
 
+    @Insert
+    int insert(Book book);
 }
 ```
 
 
 
-### SQLファイル
+### [SQLファイル(2-way SQL)](http://doma.readthedocs.org/ja/stable/sql/)
 
 主にSELECT文で使う。
-Daoのメソッドに対応したパスに置く。
+DAOのメソッドに対応したパスに置く。
 例えば `META-INF/app/dao/BookDao/select.sql`
 
 ```
@@ -81,16 +85,16 @@ SELECT /*%expand*/*
 ### コンパイル時に色々検出
 
 * `@Select` を付けたメソッドに対応するSQLファイルがないとコンパイルエラー
-* Daoクラスのメソッドに `@Select` や `@Insert` などのアノテーションが付いていないとコンパイルエラー
+* DAOクラスのメソッドに `@Select` や `@Insert` などのアノテーションが付いていないとコンパイルエラー
 * SQLファイルの中身が空っぽだとコンパイルエラー
 * メソッドの引数がSQLファイル内で使用されていないとコンパイルエラー
 * SQLファイル内の `/*%if ...*/` や `/*%end*/` が変な位置にあるとコンパイルエラー
 
 
 
-### ドメインクラス
+### [ドメインクラス](http://doma.readthedocs.org/ja/stable/domain/#id3)
 
-エンティティのフィールドやDaoのメソッドの引数、戻り値にStringなどの基本型ではなくてユーザー定義のクラスを利用できる仕組み。
+エンティティのフィールドやDAOのメソッドの引数、戻り値にStringなどの基本型ではなくてユーザー定義のクラスを利用できる仕組み。
 
 ```
 @Domain(valueType = String.class)
@@ -129,7 +133,7 @@ public class Book {
 
 
 
-### Daoでドメインクラスを使う
+### DAOでドメインクラスを使う
 
 メソッドの引数や戻り値に使える。
 (この例は引数だけ)
@@ -185,7 +189,7 @@ dao.select(author, title); //引数が逆
 
 
 
-### StreamやOptionalへの対応
+### [StreamやOptionalへの対応](http://doma.readthedocs.org/ja/stable/query/select/#id8)
 
 ```
 @Select(strategy = SelectType.STREAM)
@@ -210,20 +214,27 @@ List<Book> books = dao.select(Collectors.toList());
 
 ### その他の機能
 
-* ローカルトランザクション
+* [ローカルトランザクション](http://doma.readthedocs.org/ja/stable/transaction/)
   ```
   transactionManager.required(() -> {
       //トランザクション内で実行される
       //例外が投げられたらロールバック
   });
   ```
-* `java.awt.Color`など自由に変更できないクラスをドメインとして扱える
+* java.awt.Colorなど自由に変更できないクラスをドメインとして扱える([外部ドメイン](http://doma.readthedocs.org/ja/stable/domain/#id7))
 * [LocalDateTimeなど](https://jcp.org/en/jsr/detail?id=310)を扱える
 * エンティティをイミュータブルにできる
   ```
   @Entity(immutable = true)
+  public class Book {
+      public final Isbn isbn;
+      public final Title title;
+      public Book(Isbn isbn, Title title) {
+          this.isbn = isbn;
+          this.title = title;
+      }
+  }
   ```
-* エンティティ作成の支援ツールdoma-genを使ってテーブル定義からエンティティを生成できる
 
 
 
@@ -321,7 +332,7 @@ public class Isbn(val value: String)
 
 
 
-### KotlinでDaoクラス
+### KotlinでDAOクラス
 
 ```
 Dao
@@ -330,6 +341,8 @@ public interface BookDao {
     @Select
     fun select(isbn: Isbn): Book
 
+    @Insert
+    fun insert(user: User): Int
 }
 ```
 
@@ -340,7 +353,7 @@ public interface BookDao {
 ### 困ったこと
 
 * 少なくとも1つ注釈処理が動くJavaコード(エンティティクラスとかドメインクラス)が無いとkapt動いてくれない
-* 注釈処理で取得できる引数名が `arg0`, `arg1` ... になる(SQLファイルで参照するとき死ぬ。
+* 注釈処理で取得できる引数名が `arg0`, `arg1` ... になるのでSQLファイルで参照するとき死ぬ。
   ```
   /** 理想 */
   SELECT * FROM book WHERE isbn = /* isbn */'dummy'
@@ -350,7 +363,7 @@ public interface BookDao {
   /** 現実 */
   SELECT * FROM book WHERE isbn = /* arg0 */'dummy'
   ```
-  あとイミュータブルなエンティティが実質的に作れない)
+  あとイミュータブルなエンティティが使い物にならない。
   ```
   //理想
   Entity(immutable = true)
