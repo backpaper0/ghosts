@@ -309,10 +309,10 @@ dependencies {
 ### Kotlinでエンティティ
 
 ```
-Entity
+@Entity
 public class Book {
 
-    Id
+    @Id
     val isbn: String? = null
 
     val title: String? = null
@@ -328,7 +328,7 @@ public class Book {
 ### Kotlinでドメインクラス 
 
 ```
-Domain(valueType = String::class)
+@Domain(valueType = String::class)
 public class Isbn(val value: String)
 ```
 
@@ -339,7 +339,7 @@ public class Isbn(val value: String)
 ### KotlinでDAOクラス
 
 ```
-Dao
+@Dao
 public interface BookDao {
 
     @Select
@@ -370,14 +370,14 @@ public interface BookDao {
   あとイミュータブルなエンティティが使い物にならない。
   ```
   //理想
-  Entity(immutable = true)
-  public class Book(Id val isbn: Isbn, val title: Title)
+  @Entity(immutable = true)
+  public class Book(@Id val isbn: Isbn, val title: Title)
   ```
 
   ```
   //現実
-  Entity(immutable = true)
-  public class Book(Id val arg0: Isbn, val arg1: Title)
+  @Entity(immutable = true)
+  public class Book(@Id val arg0: Isbn, val arg1: Title)
   ```
 
 
