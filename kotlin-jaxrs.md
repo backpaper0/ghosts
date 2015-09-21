@@ -804,7 +804,7 @@ val c = a.flatMap { x => b.map { y => x + y }}
 //for式で書ける
 val c = for {
   x <- a
-  x <- b
+  y <- b
 } yield x + y
 ```
 
