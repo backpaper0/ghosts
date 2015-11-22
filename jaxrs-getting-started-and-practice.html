@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <title>JAX-RS入門および実践</title>
+        <link rel="stylesheet" href="static/css/reveal.min.css">
+        <link rel="stylesheet" href="static/css/theme/night.css">
+        <link rel="stylesheet" href="static/lib/css/zenburn.css">
+        <link rel="stylesheet" href="static/revealjs.css" type="text/css" />
+        <style type="text/css">
+.reveal h1,
+.reveal h2,
+.reveal h3,
+.reveal h4,
+.reveal {
+    font-family: "YuGothic Medium";
+}
+   /*
+      .reveal h1,
+      .reveal h2,
+      .reveal h3 {
+          color: #e7ad52;
+      }
+    */
+      .reveal code {
+          font-family: "Yutapon coding Demi Bold Sl";
+      }
+      .reveal code {
+          font-size: 150%;
+          line-height: 1.1;
+      }
+      strong {
+          color: #66ffcc;
+      }
+        </style>
+    </head>
+    <body>
+        <div class="reveal">
+            <div class="slides">
+                <section data-markdown="jaxrs-getting-started-and-practice.md"  
+                         data-separator="^---"
+                         data-vertical="^\n\n"  
+                         data-charset="UTF-8"></section>
+            </div>
+        </div>
+        <script src="static/js/jquery.min.js"></script>
+        <script src="static/lib/js/head.min.js"></script>
+        <script src="static/js/reveal.js"></script>
+        <script>
+Reveal.initialize({
+    width: 960,
+    height: 700,
+    history: true,
+    dependencies: [
+    { src: 'static/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+    { src: 'static/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+    { src: 'static/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+        { src: 'static/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+    ]
+});
+        </script>
+    </body>
+</html>
