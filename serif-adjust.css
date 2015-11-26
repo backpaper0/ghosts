@@ -1,0 +1,35 @@
+.reveal h1,
+.reveal h2,
+.reveal h3,
+.reveal code,
+.reveal {
+    /*
+       font-family: "YuGothic Medium";
+     */
+    font-family: "Yutapon coding Demi Bold Sl";
+}
+.reveal h1 { font-size: 3em; }
+.reveal h2 { font-size: 2em; }
+.reveal h3 { font-size: 1.5em; }
+.reveal pre code {
+    font-size: 140%;
+    line-height: 1;
+}
+.reveal code {
+}
+.reveal strong {
+    color: white;
+    background-color: #26351c;
+}
+.reveal em {
+    text-decoration: underline;
+}
+.reveal li {
+    margin-bottom: 0.25em;
+}
+.reveal table,
+.reveal th,
+.reveal td {
+    border: solid gray thin;
+    border-collapse: collapse;
+}
