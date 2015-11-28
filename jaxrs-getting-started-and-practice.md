@@ -30,7 +30,7 @@
 
 * Java EE 6から登場したWebフレームワーク
 * [JSR 339](https://jcp.org/en/jsr/detail?id=339)、参照実装は[Jersey](https://jersey.java.net/)
-* アノテーションを使用して宣言的にHTTPリクエスト・レスポンスをJavaコードにマッピングする
+* アノテーションを使用してHTTPリクエスト・レスポンスをJavaコードにマッピングする
 * RESTful APIを作るのに特化している
 
 
@@ -52,7 +52,7 @@
   * JAX-RSはServlet APIに依存しない
 
 * JSFはHTTPをなるべく意識せずデスクトップGUIに近い感覚で画面が作れる
-  * JAX-RSはHTTPを宣言的にJavaコードにマッピングする
+  * JAX-RSはHTTPを意識してJavaコードにマッピングする
 
 * JSFはXHTMLのテンプレートエンジンがあり、画面がある事が前提
   * JAX-RSはRESTful APIが主戦場
