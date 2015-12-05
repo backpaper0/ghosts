@@ -45,9 +45,13 @@
 
 ## Jersey SSE Support
 
+![](./assets/jersey_logo.png)
+
 ---
 
 ## Ozark
+
+![](./assets/ozark_logo.jpg)
 
 ---
 
