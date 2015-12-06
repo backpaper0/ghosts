@@ -10,7 +10,7 @@
 
 ---
 
-## Server-Sent Events
+## Server-Sent Events (SSE)
 
 * サーバー→クライアントの通知
 * HTTPプロトコルで実現
@@ -21,6 +21,16 @@
 
 * アクションベースのMVC
 * JAX-RS拡張として提供
+
+---
+
+## その他
+
+* [JSON Binding](https://www.jcp.org/en/jsr/detail?id=367)
+* HTTP/2サポート
+* CDIの強化
+* [Java EE Management API 2.0](https://www.jcp.org/en/jsr/detail?id=373)
+* [Java EE Security API](https://www.jcp.org/en/jsr/detail?id=375)
 
 ---
 
@@ -45,11 +55,15 @@
 
 ## Jersey SSE Support
 
+JerseyによるServer-Sent Eventsのサポート
+
 ![](./assets/jersey_logo.png)
 
 ---
 
 ## Ozark
+
+MVC 1.0の参照実装
 
 ![](./assets/ozark_logo.jpg)
 
@@ -73,20 +87,22 @@
 
 ## 例：Jersey SSE
 
+TODO Callableをimplementsしたクラスを作る(その方がたぶんん読みやすい)
+TODO あと、実行結果を載せる
+
 ```java
 @RequestScoped
 @Path("sse")
 public class SimpleSSESample {
-
     @Resource
     private ManagedExecutorService executor;
 
     @GET
     @Produces(SseFeature.SERVER_SENT_EVENTS)
     public EventOutput sendEvents() {
-        EventOutput eventOutput = new EventOutput();
-        ...(後述)...
-        return eventOutput;
+        EventOutput out = new EventOutput();
+        executor.submit(new Task(out));
+        return out;
     }
 }
 ```
@@ -96,21 +112,56 @@ public class SimpleSSESample {
 ## 例：Jersey SSE
 
 ```java
-executor.submit(() -> {
-    try {
-        for (int i = 0; i < 10; i++) {
-            OutboundEvent event = new OutboundEvent.Builder()
-                    .name("message").data("Hello " + i).build();
-            eventOutput.write(event);
-        }
-    } catch(IOException e) {
-    } finally {
+class Task implements Callable<Void> {
+    private final EventOutput out;
+    public Task(EventOutput out) { this.out = out; }
+    public Void call() throws Exception {
         try {
-            eventOutput.close();
-        } catch(IOException e) {}
+            for (int i = 0; i < 10; i++) {
+                TimeUnit.SECONDS.sleep(1);
+                OutboundEvent event = new OutboundEvent.Builder()
+                        .name("message").data("Hello " + i).build();
+                out.write(event);
+            }
+            return null;
+        } finally { out.close(); }
     }
+}
+```
+
+---
+
+## 例：Jersey SSE
+
+クライアント側のコード(JavaScript)
+
+```javascript
+var es = new EventSource('/sample/app/sse');
+es.addEventListener('message', function(event) {
+    console.log(event.data);
 });
 ```
+
+---
+
+## 例：Jersey SSE
+
+実行結果
+
+```
+Hello 0
+Hello 1
+Hello 2
+Hello 3
+Hello 4
+Hello 5
+Hello 6
+Hello 7
+Hello 8
+Hello 9
+```
+
+※1秒毎に表示される
 
 ---
 
