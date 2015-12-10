@@ -87,9 +87,6 @@ MVC 1.0の参照実装
 
 ## 例：Jersey SSE
 
-TODO Callableをimplementsしたクラスを作る(その方がたぶんん読みやすい)
-TODO あと、実行結果を載せる
-
 ```java
 @RequestScoped
 @Path("sse")
