@@ -80,7 +80,7 @@ MVC 1.0の参照実装
 ## Jersey SSE Support
 
 * JerseyはJAX-RSの参照実装
-* JerseyでSSEするための拡張
+* Jersey SSE SupportはJerseyでSSEするための拡張
 * dependenciesに一行足すだけで使える(Gradle)
 
 ---
