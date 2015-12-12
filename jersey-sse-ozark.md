@@ -176,7 +176,7 @@ dependencies {
 
 ## Ozark
 
-* JSR 371の参照実装
+* JSR 371 MVC 1.0の参照実装
 * Jerseyをベースに作られている
 * JSP、Thymeleaf、mustacheなどのテンプレートに対応
 * dependenciesに一行足すだけで使える(Gradle)
