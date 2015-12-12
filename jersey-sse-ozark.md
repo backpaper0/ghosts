@@ -243,3 +243,4 @@ https://github.com/backpaper0/jersey-sse-ozark-sample
 
 * Java EE 8の新機能の一部は今からでも試せる
 * 素振りをしておくとスムーズに導入できる
+* もしくは、導入しないという判断もしやすい
