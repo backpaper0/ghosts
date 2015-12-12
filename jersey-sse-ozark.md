@@ -237,6 +237,8 @@ dependencies {
 
 https://github.com/backpaper0/jersey-sse-ozark-sample
 
+![](./assets/jersey-sse-ozark-sample-screenshot.png)
+
 ---
 
 ## まとめ
