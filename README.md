@@ -2,6 +2,6 @@
 
 勉強会での発表に使用した資料です。
 
-## ライセンス
+## License
 
-[Apache License Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt)
+Licensed under [The MIT License](https://opensource.org/licenses/MIT)
