@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Doma実践</title>
+    <meta charset="utf-8">
+    <style>
+@import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+@font-face {
+    font-family: 'mplus';
+    src: url('assets/mplus-1c-regular.ttf');
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'mplus';
+}
+p, li {
+    font-family: 'mplus';
+    font-size: 1.5em;
+}
+code.remark-inline-code {
+    font-family: 'Ubuntu Mono';
+}
+code.remark-code {
+    font-family: 'Ubuntu Mono';
+    font-size: 1.2em;
+}
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Doma実践
+
+---
+
+## アジェンダ
+
+* `Dao`をCDI管理する
+* `EntityListener`をCDI管理する
+* JAX-RSでドメインクラスをパラメーターに使う
+* JAX-RSとJSONとドメインクラス
+* ジェネリックなドメインクラス
+* インターフェースなドメインクラス
+* ドメインクラスと曖昧な状態
+* Domaのカスタマイズ
+* Domaへコントリビュートする
+
+---
+
+class: center, middle
+
+## `Dao`をCDI管理する
+
+---
+
+### CDIで管理する対象
+
+* `Config` ( `DataSource` , `Dialect` )
+* `Dao`
+
+以下は管理しない
+
+* エンティティ
+* ドメインクラス
+
+---
+
+### やりたいこと
+
+```java
+@ApplicationScoped
+public class AccountService {
+    //↓Daoをインジェクションしたい
+    @Inject AccountDao dao;
+
+    ...省略...
+}
+```
+
+---
+
+### やらなくてはいけないこと
+
+* `Config`実装クラス・ `Dao`実装クラスにスコープのアノテーションを付ける
+  (CDI管理するための条件)
+* `Dao`実装クラスの `Config` を受け取るコンストラクタに `@Inject` を付ける
+  (CDI管理されている `Config` をコンストラクタインジェクションする)
+
+---
+
+### `Config`実装クラス
+
+```java
+@ApplicationScoped
+public class MyConfig implements Config {
+    @Resource(name = "java:comp/env/jdbc/myDS")
+    private DataSource dataSource;
+    private Dialect dialect = new OracleDialect();
+    public DataSource getDataSource() { return dataSource; }
+    public Dialect getDialect() { return dialect; }
+}
+```
+
+`@Resource`で`DataSource`をインジェクションしている。
+
+---
+
+### `Dao`実装クラス
+
+* `Dao`実装クラスは注釈処理によって自動生成される
+* スコープのアノテーションを付けるには注釈処理をカスタマイズする仕組みが必要
+
+---
+
+### `@AnnotateWith` アノテーションを使う
+
+* そのものズバリ、`Dao`実装クラスにアノテーションを付ける仕組み
+
+```java
+@Dao
+@AnnotateWith(annotations = {
+    @Annotation(target = AnnotationTarget.CLASS,
+                  type = ApplicationScoped.class),
+    @Annotation(target = AnnotationTarget.CONSTRUCTOR,
+                  type = Inject.class) })
+public interface AccountDao { ... }
+```
+
+---
+
+### 生成される `Dao` 実装クラス
+
+```java
+@ApplicationScoped
+public class AccountDaoImpl extends AbstractDao
+                            implements AccountDao {
+    ...
+
+    @Inject
+    public AccountDaoImpl(Config config) {
+        super(config);
+    }
+
+    ...
+}
+```
+
+※見やすくするためFQCNを単純名にしたり改行したりしています
+
+---
+
+### でも……
+
+全部の`Dao`にこんなにもりもりアノテーション書いていられない。
+
+---
+
+### そこで
+
+`@AnnotateWith`を付けたアノテーションを用意して、
+
+```java
+@AnnotateWith(annotations = {
+    @Annotation(target = AnnotationTarget.CLASS,
+                  type = ApplicationScoped.class),
+    @Annotation(target = AnnotationTarget.CONSTRUCTOR,
+                  type = Inject.class) })
+@Retention(RetentionPolicy.RUNTIME)
+public @interface CdiManaged {
+}
+```
+
+---
+
+### それを
+
+`Dao`に付けても同じ効果を得られる。
+
+```java
+@Dao
+@CdiManaged
+public interface AccountDao { ... }
+```
+
+すっきり。
+
+---
+
+### `Dao`実装クラスのおすすめスコープ
+
+* `@ApplicationScoped` がおすすめ
+* もしくは `@Dependent`
+* `@RequestScoped` はWebにしか使えないから避けたい
+* `@SessionScoped` は論外
+
+---
+
+### `Dao`をコンテナ管理することの是非
+
+* `Dao`を使う側のコードで`new`する必要がなくなってコードが減る
+* `Dao`にインターセプターを適用できる
+* `Dao`以外のコンテナ管理されているオブジェクトを利用するコードと統一感が出せる
+
+ぶっちゃけそこまでたいしたメリットではないので無理にDIコンテナ使わなくても良いけど私は使うので次もCDIの話題です。
+
+---
+
+class: center, middle
+
+## `EntityListener`をCDI管理する
+
+---
+
+### `EntityListener`がインスタンスされる場所
+
+デフォルトでは`EntityListener`は`EntityListenerProvider`によってインスタンス化される。
+
+---
+
+### `EntityListenerProvider`のデフォルト実装
+
+`EntityListenerProvider.get`では渡された`Supplier`の`get`メソッドを呼んでいるだけ。
+
+```java
+public interface EntityListenerProvider {
+
+    default <E, L extends EntityListener<E>> L get(
+            Class<L> listenerClass,
+            Supplier<L> listenerSupplier) {
+
+        return listenerSupplier.get();
+    }
+}
+```
+
+---
+
+### 渡される`Supplier`について
+
+* `Supplier`はエンティティの注釈処理で自動生成されるエンティティタイプクラスがインスタンス化して`EntityListenerProvider.get`に渡している
+* この`Supplier`は`EntityListener`実装クラスを単純に`new`している
+
+※詳細はコードを読んでみてください。
+エンティティタイプクラスはエンティティと同じパッケージに、エンティティ名の先頭にアンダースコアを付けた名前で生成されます。
+
+---
+
+### ここまでおさらい
+
+* `EntityListener`のインスタンスは`EntityListenerProvider.get`で取得される
+* `EntityListenerProvider.get`では`Supplier.get`で得たインスタンスを返している
+* `Supplier.get`では単純に`new`されている
+
+なお、`EntityListenerProvider`は`Config`から取得される
+
+---
+
+### `EntityListener`をCDI管理する方法
+
+* CDI管理された`EntityListener`をルックアップする`EntityListenerProvider.get`を実装
+* その`EntityListenerProvider`実装クラスを`Config.getEntityListenerProvider` から返すようにする
+
+---
+
+### `EntityListenerProvider`の実装例
+
+引数の`listenerClass`と`CDI`ユーティリティクラスを使ってルックアップする。
+
+```java
+public class CdiEntityListenerProvider
+        implements EntityListenerProvider {
+
+    public <E, L extends EntityListener<E>>
+            L get(Class<L> listenerClass,
+                  Supplier<L> listenerSupplier) {
+        return CDI.current().select(listenerClass).get();
+    }
+}
+```
+
+---
+
+### `Config.getEntityListenerProvider`
+
+```java
+public class MyConfig implements Config {
+
+    ...
+
+    public EntityListenerProvider getEntityListenerProvider() {
+        return new CdiEntityListenerProvider();
+    }
+}
+```
+
+もちろん`CdiEntityListenerProvider`自体をCDI管理してもOK(あんまり意味なさそうだけど)
+
+---
+
+### インジェクションとルックアップ
+
+* 今回はアプリケーションの基盤・共通部品のレイヤーなのでルックアップ使用したけど個別の機能ではインジェクションを使うべき
+* ルックアップよりもインジェクション
+* jQueryよりもMVVM、という構図に似ている
+* この辺の理由をうまく言語化できず感覚で話しているので今度はDIをテーマにしたイベントしましょう
+
+---
+
+### ちなみに `EntityListenerProvider` は
+
+![doma-practice-01](assets/doma-practice-01.png)
+
+![doma-practice-02](assets/doma-practice-02.png)
+
+私が実装しました(ドヤ顔
+
+---
+
+class: center, middle
+
+## JAX-RSでドメインクラスをパラメーターに使う
+
+---
+
+### JAX-RSでは
+
+クエリパラメーターやフォームパラメーター、パスの一部などをメソッドの引数で受け取ることができる。
+
+```java
+@Path("accounts/{id}")
+@POST
+@Consumes("application/x-www-form-urlencoded")
+public void get(
+        @PathParam("id") String id,
+        @QueryParam("email") String email) {
+    ...
+}
+```
+
+これらのパラメーターに`String`ではなくドメインクラスを使いたい。
+
+---
+
+### パラメーターにするには
+
+次のいずれかを作れば良い。
+
+* `String`を受け取るコンストラクタ
+* `String`を受け取る`valueOf`ファクトリーメソッド
+* `String`を受け取る`fromString`ファクトリーメソッド
+* `ParamConverter`実装クラス
+
+---
+
+### パラメーターに使えるドメインクラスの例
+
+```java
+@Domain(valueType = String.class)
+public class EmailAddress {
+    private final String value;
+    public EmailAddress(String value) { this.value = value; }
+    public String getValue() { return value; }
+}
+```
+
+あっさりできた。
+
+---
+
+### `valueType`が`String.class`以外の例
+
+```java
+@Domain(valueType = Long.class)
+public class Key {
+    private final Long value;
+    public Key(Long value) { this.value = value; }
+    public Long getValue() { return value; }
+
+    public static Key valueOf(String value) {
+        return new Key(Long.valueOf(value));
+    }
+}
+```
+
+コンストラクタとは別にファクトリーメソッドを用意すれば良い。
+
+---
+
+### パラメーターにドメインクラスを使った例
+
+```java
+@Path("accounts/{id}")
+@POST
+@Consumes("application/x-www-form-urlencoded")
+public void get(
+        @PathParam("id") Key id,
+        @QueryParam("email") EmailAddress email) {
+    ...
+}
+```
+
+---
+
+class: center, middle
+
+## JAX-RSとJSONとドメインクラス
+
+---
+
+### 前提
+
+* GlassFish(Payara)
+
+---
+
+### ドメインクラスを含むPOJOをJSONで返す
+
+こういうPOJOから、
+
+```java
+public class Account {
+    public Username username;
+    public EmailAddress email;
+}
+```
+
+こういうJSONを作りたい。
+
+```json
+{"username":"うらがみ","email":"backpaper0@gmail.com"}
+```
+
+---
+
+### ドメインクラスをJSONに書き出すには
+
+`XmlAdapter`を書けばOK。
+
+```java
+public class MailAddressXmlAdapter
+        extends XmlAdapter<String, MailAddress> {
+
+    public MailAddress unmarshal(String v) throws Exception {
+        return v != null ? new MailAddress(v) : null;
+    }
+
+    public String marshal(MailAddress v) throws Exception {
+        return v != null ? v.getValue() : null;
+    }
+}
+```
+
+---
+
+### JSONなのに`XmlAdapter`？？？
+
+* GlassFishデフォルトのJSON変換はJAXB経由で行われる
+* Jacksonを使う場合も`XmlAdapter`による変換をサポートしている
+
+そんなわけで`XmlAdapter`がお手軽です。
+
+---
+
+### `XmlAdapter`を適用する
+
+フィールドに`@XmlJavaTypeAdapter`を付けて`XmlAdapter`を指定するか、
+
+```java
+public class Account {
+    public String username;
+    @XmlJavaTypeAdapter(MailAddressXmlAdapter.class)
+    public MailAddress email;
+}
+```
+
+---
+
+### `XmlAdapter`を適用する
+
+POJOが置かれているパッケージの`package-info.java`に`@XmlJavaTypeAdapter`を付けて`XmlAdapter`を指定するか、
+
+```java
+@XmlJavaTypeAdapter(MailAddressXmlAdapter.class)
+package app.entity;
+```
+
+---
+
+### `XmlAdapter`を適用する
+
+ドメインクラスに`@XmlJavaTypeAdapter`を付けて`XmlAdapter`を指定する。
+
+```java
+@XmlJavaTypeAdapter(MailAddressXmlAdapter.class)
+@Domain(valueType = String.class)
+public class MailAddress {
+    ...
+```
+
+---
+
+### `XmlAdapter`を適用する
+
+* フィールドに`@XmlJavaTypeAdapter`
+* `package-info.java`に`@XmlJavaTypeAdapter`
+* ドメインクラスに`@XmlJavaTypeAdapter`
+
+個人的にはドメインクラスに`@XmlJavaTypeAdapter`を付けるのがおすすめ。
+
+---
+
+### ところで
+
+`XmlAdapter`の実装は基本的には`unmarshal`でドメインクラスを生成、`marshal`で値を取り出すというボイラープレートなコードになる。
+
+---
+
+### というわけで
+
+ドメインクラスから`XmlAdapter`を生成する注釈プロセッサを最近書いています。
+
+![doma-practice-09](assets/doma-practice-09.png)
+
+---
+
+class: center, middle
+
+## ジェネリックなドメインクラス
+
+---
+
+### ジェネリックなドメインクラスの活用
+
+* ドメインクラスは型引数を取ることができる
+
+```java
+@Domain(valueType = Long.class)
+public class Key<ENTITY> {
+    private final Long value;
+    public Key(Long value) { this.value = value; }
+    public Long getValue() { return value; }
+}
+```
+
+型引数はドメインクラス内ではまったく使用されないが……
+
+---
+
+### `Dao` のメソッドの引数で役立つ 
+
+```java
+@Select
+Account selectById(Key<Account> id);
+```
+
+* このメソッドに渡せるのは `Key<Account>` だけ
+* `Key<Task>` や `Key<Project>` のように異なる型引数を取る `Key` を渡そうとするとコンパイルエラーとなる
+
+![doma-practice-03](assets/doma-practice-03.png)
+
+---
+
+### ジェネリックなドメインクラスを使わないと
+
+```java
+@Select
+Account selectById(Key id);
+```
+
+コンパイルエラーで検出できない
+
+![doma-practice-04](assets/doma-practice-04.png)
+
+---
+
+class: center, middle
+
+## インターフェースなドメインクラス
+
+---
+
+### インターフェースなドメインクラスの活用
+
+* ドメインクラスはインターフェースにもできる
+* その場合はコンストラクタが使えないのでstaticファクトリーメソッドを用意する
+
+```java
+@Domain(valueType = String.class,
+        factoryMethod = "valueOf")
+public interface Color {
+
+    String getValue();
+
+    static Color valueOf(String value) {
+        return new ColorImpl(value);
+    }
+}
+```
+
+---
+
+### 使いどころ
+
+決まった値があるけど自由入力も許すという場合に便利
+
+```java
+//定義済みの色を表現する
+public enum DefinedColor implements Color {
+    RED, BLUE, GREEN;
+    public String getValue() { return name(); }
+}
+
+//#f90c76 のような16進数表現をする
+public class ColorImpl implements Color {
+    private final String value;
+    public ColorImpl(String value) { this.value = value; }
+    public String getValue() { return value; }
+}
+```
+
+---
+
+### `Color.valueOf`の実装例
+
+```java
+static Color valueOf(String value) {
+    //定義済みの色があればDefinedColorを返す
+    //なければColorImplを返す
+    return Arrays.stream(DefinedColor.values())
+            .filter(c -> value.equals(c.getValue()))
+            .findFirst()
+            .map(Color.class::cast)
+            .orElseGet(() -> new ColorImpl(value));
+}
+```
+
+---
+
+### ちなみに
+
+インターフェースなドメインクラスはstaticなファクトリーメソッドを定義する必要があるのでJava 8でないと実現できないけど、
+外部ドメインを使えば似たような事は出来るのでJava 8より前を強いられていても安心！
+
+---
+
+### ちなみに(2)
+
+![doma-practice-05](assets/doma-practice-05.png)
+
+これも私が実装しました(ドヤ顔
+
+---
+
+class: center, middle
+
+## ドメインクラスと曖昧な状態
+
+---
+
+### 前方一致の検索条件をドメインクラスで扱う
+
+* 画面で入力された値をもとに前方一致検索を行う
+* 業務アプリでよくある感じの仕様
+
+---
+
+### ドメインクラスを普通に使うと
+
+曖昧な状態を許容しなくてはいけない
+
+![doma-practice-06](assets/doma-practice-06.png)
+
+```java
+//前方一致の検索条件なのでbackpaper0@gmail.comではなく
+//backpapみたいな曖昧な状態を許容せざるをえない
+@GET
+public Response search(
+    @QueryParam("email") EmailAddress condition) { ... }
+```
+
+---
+
+### 制約を守る
+
+* ドメインクラスは制約を守って使うべき
+* 曖昧な状態を許すとドメインクラスを使う場面で不安になる
+
+---
+
+### ドメインクラスを使わないと
+
+型を `String` などの基本型にすると型からはメールアドレスなのかそれ以外の項目なのかが分からなくなる
+
+```java
+@GET
+public Response search(
+    @QueryParam("email") String condition) { ... }
+```
+
+※型は大切にしましょう
+
+---
+
+### そこで……
+
+前方一致の検索条件を表すドメインクラスを導入してみる
+
+```java
+@Domain(valueType = String.class)
+public class PartOf<T> {
+    private final String value;
+    public PartOf(String value) { this.value = value; }
+    public String getValue() { return value; }
+}
+```
+
+このようなドメインクラスを作って……
+
+---
+
+### 前方一致条件のドメインクラス
+
+こう使う
+
+```java
+@GET
+public Response search(
+    @QueryParam("email") PartOf<EmailAddress> condition) {
+        ...
+}
+```
+
+型変数にドメインクラスをバインドすることで「メールアドレスの一部」ということを型で表現
+
+---
+
+class: center, middle
+
+## Domaのカスタマイズ
+
+---
+
+### `Config`
+
+カスタマイズのエントリーポイント。
+
+* `Config.getQueryImplementors`
+* `Config.getCommandImplementors`
+
+---
+
+### `Dao`メソッドは
+
+* クエリをインスタンス化して
+* クエリを組み立てて
+* コマンドをインスタンス化して
+* コマンドを実行する
+
+といった処理を行う。
+
+---
+
+### この処理の中で
+
+クエリのインスタンス化に`QueryImplementers`を、コマンドのインスタンス化に`CommandImplementers`を使うのでカスタマイズしたクエリやコマンドを使うこともできる。
+
+---
+
+### `QueryImplementers`でカスタマイズ
+
+色々試す時間が取れず省略😨💦(ごめんなさい)
+
+SQL文をパースしてASTを構築する処理をカスタマイズできるので、例えば自動的に`削除フラグ = false`を付けたクエリに変換する、などができる。と思う(良い例ではない)
+
+---
+
+### `CommandImplementers`でカスタマイズ
+
+コマンドは次のようなことを行う。
+
+* `PreparedStatement`を実行
+* (検索系コマンドなら)結果をエンティティなどへマッピング
+
+---
+
+### `CommandImplementers`でカスタマイズ
+
+例えば、
+
+* コネクション切断時にリトライするコマンド
+* 検索系はスレーブ、更新系はマスターに対してクエリを発行するコマンド
+* コネクションなどのクローズを遅延させて`Dao`メソッドの外部で`Stream`や`Iterator`を使うコマンド
+
+などのカスタマイズを行える。
+(でも実案件でやったことはない)
+
+---
+
+class: center, middle
+
+## Domaへコントリビュートする
+
+---
+
+### プルリクエストをしよう
+
+* Domaはプルリクエストの壁が高くない
+* PR自体もコミットコメントもコードのコメントも日本語でOK
+* 作者の[@nakamura_to](https://twitter.com/nakamura_to)さんがめっちゃ優しい(PRの相談も気軽に乗ってくれる)
+* ドキュメントのtypo修正が気楽かつ必ずマージされるので最初のPRには良さそう
+
+---
+
+### めっちゃ気が楽
+
+![doma-practice-08](assets/doma-practice-08.png)
+
+※PRのタイトルはもう少しちゃんと書きましょう
+
+---
+
+### コントリビューターに名前を連ねよう
+
+好きなOSSに貢献できると嬉しい。
+
+![doma-practice-07](assets/doma-practice-07.png)
+
+---
+
+## 参考
+
+* [Doma](http://doma.readthedocs.org/)
+* [EntityListenerをDIコンテナで管理する](http://backpaper0.github.io/2015/03/28/doma_listener_from_config.html)
+* [前方一致の検索条件とドメインクラス](http://backpaper0.github.io/2014/11/01/prefix_domain.html)
+* [コマンドをカスタマイズしてSpring Batchで使う](https://github.com/backpaper0/spring-batch-item-stream-reader-doma-sample)
+* [SpringBoot + Domaで複数の`DataSource`を扱う](https://github.com/backpaper0/spring-boot-doma-multi-config-sample)
+* [Domaでimmutableなエンティティを使う](https://github.com/backpaper0/doma-immutable-entity-sample)
+* [Spring Boot + Doma2を使おう - BLOG.IK.AM](https://blog.ik.am/entries/371)
+* [Doma+Springの連携サンプル - BLOG.IK.AM](https://blog.ik.am/entries/191)
+* [IntelliJ IDEAのDomaサポートプラグイン](https://github.com/siosio/DomaSupport)
+
+---
+
+## この資料について
+
+* Author: [@backpaper0](https://github.com/backpaper0)
+* License:  [The MIT License](https://opensource.org/licenses/MI://opensource.org/licenses/MIT)
+
+    </textarea>
+    <script src="assets/remark-0.13.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
