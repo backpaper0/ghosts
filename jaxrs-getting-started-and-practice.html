@@ -1,41 +1,1830 @@
 <!DOCTYPE html>
-<html lang="ja">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <title>JAX-RS入門および実践</title>
-        <link rel="stylesheet" href="static/css/reveal.min.css">
-        <link rel="stylesheet" href="static/css/theme/serif.css">
-        <link rel="stylesheet" href="static/lib/css/zenburn.css">
-        <link rel="stylesheet" href="static/revealjs.css" type="text/css" />
-        <link rel="stylesheet" href="serif-adjust.css" type="text/css" />
-    </head>
-    <body>
-        <div class="reveal">
-            <div class="slides">
-                <section data-markdown="jaxrs-getting-started-and-practice.md"  
-                         data-separator="^---"
-                         data-vertical="^\n\n"  
-                         data-charset="UTF-8"></section>
-            </div>
-        </div>
-        <script src="static/js/jquery.min.js"></script>
-        <script src="static/lib/js/head.min.js"></script>
-        <script src="static/js/reveal.js"></script>
-        <script>
-Reveal.initialize({
-    width: 1024,
-    height: 640,
-    history: true,
-    dependencies: [
-    { src: 'static/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
-    { src: 'static/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
-    { src: 'static/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
-        { src: 'static/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
-    ]
-});
-        </script>
-    </body>
+<html>
+  <head>
+    <title>JAX-RS</title>
+    <meta charset="utf-8">
+    <style>
+@import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+@font-face {
+    font-family: 'mplus';
+    src: url('assets/mplus-1c-regular.ttf');
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'mplus';
+}
+p, li {
+    font-family: 'mplus';
+    font-size: 1.2em;
+}
+strong {
+    text-decoration: underline;
+}
+li p, li li {
+    font-size: 1em;
+}
+code.remark-inline-code {
+    font-family: 'Ubuntu Mono';
+}
+code.remark-code {
+    font-family: 'Ubuntu Mono';
+    font-size: 1.2em;
+}
+table {
+    border-right: thin solid silver;
+    border-bottom: thin solid silver;
+}
+th, td {
+    border-left: thin solid silver;
+    border-top: thin solid silver;
+}
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# JAX-RS入門<br/>および実践
+
+---
+
+## 自己紹介
+
+* うらがみ
+* 大阪のSIer
+* プログラマ歴9年弱(ほとんどJava)
+* JAX-RSでのお仕事歴は4年ぐらい
+
+---
+
+## 本日の発表内容
+
+* JAX-RSの概要
+* JAX-RSの入門的な解説
+* 実践の話をいくつか
+
+---
+
+class: center, middle
+
+## JAX-RSの概要
+
+---
+
+## JAX-RSとは
+
+* Java EE 6から登場したWebフレームワーク
+* [JSR 339](https://jcp.org/en/jsr/detail?id=339)、参照実装は[Jersey](https://jersey.java.net/)
+* アノテーションを使用してHTTPリクエスト・レスポンスをJavaコードにマッピングする
+* RESTful APIを作るのに特化している
+
+---
+
+### JAX-RS/Servlet/JSF比較
+
+<table>
+<tr>
+<th></th>
+<th>JAX-RS</th>
+<th>Servlet</th>
+<th>JSF</th>
+</tr>
+<tr>
+<th>APIのレベル感</th>
+<td>高レベル</td>
+<td>低レベル</td>
+<td>高レベル</td>
+</tr>
+<tr>
+<th>特徴</th>
+<td>HTTPを宣言的にマッピング</td>
+<td>際立った特徴は無い</td>
+<td>デスクトップGUIのような感覚で作れる</td>
+</tr>
+<tr>
+<th>向いているもの</th>
+<td>RESTful API</td>
+<td>他のフレームワークのベース</td>
+<td>画面有りのWebアプリケーション</td>
+</tr>
+<tr>
+<th>Servlet API</th>
+<td>Servlet APIに依存しない</td>
+<td>-</td>
+<td>Servlet API上に構築されている</td>
+</tr>
+</table>
+
+---
+
+### 簡単な例
+
+* ServletとJAX-RSで足し算してみてコードの違いを確認
+* `/addition?a=1&b=2` にアクセスすると `3` が返ってくるといった仕様
+
+※JSFは方向性が違いすぎるので割愛します
+
+---
+
+### Servletで足し算
+
+```java
+@WebServlet(urlPatterns = "addition")
+public class Addition extends HttpServlet {
+    protected void doGet(HttpServletRequest req,
+                         HttpServletResponse resp)
+                 throws ServletException, IOException {
+        int a = Integer.parseInt(req.getParameter("a"));
+        int b = Integer.parseInt(req.getParameter("b"));
+        resp.setContentType("text/plain");
+        try (PrintWriter out = resp.getWriter()) {
+            out.print(a + b);
+        }
+    }
+}
+```
+
+---
+
+### JAX-RSで足し算
+
+```java
+@Path("addition")
+public class Addition {
+    @GET
+    @Produces("text/plain")
+    public int calculate(@QueryParam("a") int a,
+                         @QueryParam("b") int b) {
+        return a + b;
+    }
+}
+```
+
+---
+
+### 宣言だけ抜粋
+
+* Servletは `/addition` にGETメソッドでアクセスする、としか読み取れないのに対して……
+
+```java
+@WebServlet(urlPatterns = "addition")
+public class Addition extends HttpServlet {
+    protected void doGet(HttpServletRequest req,
+                         HttpServletResponse resp)
+                 throws ServletException, IOException { ... }
+```
+
+---
+
+### 宣言だけ抜粋
+
+* JAX-RSは `/addition` にクエリパラメータ `a` と `b` を付与してGETメソッドでアクセスすると `text/plain` なエンティティが返ってくる、と読み取れる
+
+```java
+@Path("addition")
+public class Addition {
+    @GET
+    @Produces("text/plain")
+    public int calculate(@QueryParam("a") int a,
+                         @QueryParam("b") int b) { ... }
+```
+
+---
+
+### 宣言から読み取れるということは
+
+* パスや`Content-Type`、パラメータの名前はコンパイル時に解決できる
+* ドキュメントの生成やモックの自動生成が行いやすい
+
+---
+
+### JAX-RS/Servlet/JSFまとめ
+
+* それぞれ向いている用途が異なる
+* Servletはより高レイヤーなフレームワークの基礎部分
+* JSFは画面(管理画面や業務アプリに向いていると思う)
+* JAX-RSはRESTful APIに向いている
+* JAX-RSはHTTPをJavaコードに宣言的にマッピングする
+
+---
+
+class: center, middle
+
+## JAX-RSの仕様について
+
+---
+
+### JAX-RSアプリケーションの構成要素
+
+* リソースクラス
+* フィルター・インターセプター
+* エンティティボディの読み込み・書き出し
+* 例外ハンドラー
+* アプリケーションの定義
+
+* クライアントAPI
+
+---
+
+### JAX-RSアプリケーションの構成要素
+
+* **リソースクラス**
+* フィルター・インターセプター
+* エンティティボディの読み込み・書き出し
+* 例外ハンドラー
+* アプリケーションの定義
+
+* クライアントAPI
+
+---
+
+## リソースクラス
+
+* HTTPリクエストを受け取るエンドポイントとなるクラス
+* `@Path` で注釈し、少なくとも1つのリソースメソッドを持つ
+
+* リソースメソッドは `@GET` や `@POST` などHTTPメソッドを表すアノテーションで注釈したメソッド
+* 他にもアノテーションを利用して受け取るパラメータや`Content-Type`などを設定できる
+
+---
+
+### Additionクラス再掲
+
+```java
+@Path("addition")
+public class Addition {
+    @GET
+    @Produces("text/plain")
+    public int calculate(@QueryParam("a") int a,
+                         @QueryParam("b") int b) {
+        return a + b;
+    }
+}
+```
+
+* `@Path` でパスを設定する
+* `@GET` でGETメソッドを受け付ける事を設定する
+* `@Produces` でレスポンスのエンティティのContent-Typeを設定する
+* `@QueryParam` でクエリパラメータを受け取る事を設定する
+
+---
+
+### HTTPリクエストとの対比
+
+```java
+@Path("addition")
+public class Addition {
+    @GET
+    @Produces("text/plain")
+    public int calculate(@QueryParam("a") int a,
+                         @QueryParam("b") int b) {
+        return a + b;
+    }
+}
+```
+
+* この `Addition.calculate` は次のようなHTTPリクエストを処理する
+
+```
+GET /addition?a=1&b=2 HTTP/1.1
+Accept: text/plain
+
+```
+
+---
+
+### パスのマッピング
+
+`@Path` はメソッドにも付けて階層を表せられる
+
+```java
+@Path("hello")
+public class Hello {
+
+    @GET
+    public String say() { ... }
+
+    @Path("world")
+    @GET
+    public String world() { ... }
+}
+```
+
+この場合 `/hello` へのリクエストは `say` メソッドに、
+
+`/hello/world` へのリクエストは `world` メソッドにマッピングされる
+
+---
+
+### パスのマッピング
+
+また、パスは `{` と `}` で囲む事で変数として使える
+
+```java
+@GET
+@Path("hello/{name}")
+public String sayHello(
+        @PathParam("name") String name) {
+    ...
+```
+
+変数に取れる文字は正規表現で制限できる
+
+次の例だと変数 `userId` は数字のみで構成される
+
+```java
+@Path("users/{userId:\\d+}")
+```
+
+---
+
+### パラメータのマッピング
+
+HTTPリクエストに含まれる次の項目をパラメータにできる
+
+* クエリパラメータ
+* パスの一部
+* Matrix URI
+* リクエストヘッダ
+* Cookie
+* フォームコントロールの値
+
+---
+
+### クエリパラメータとパスの一部
+
+すでに紹介している機能
+
+```java
+@Path("foo/{foo}")
+public class Foo {
+    @GET
+    public String bar(
+            @PathParam("foo") String foo,
+            @QueryParam("bar") String bar) {
+        ...
+```
+
+これは次のようなリクエストパスに対応する
+
+```
+/foo/xxx?bar=yyy
+```
+
+---
+
+## Matrix URI
+
+```java
+@Path("addition")
+public class Addition {
+    @GET
+    public String calculate(
+            @MatrixParam("left") int left,
+            @MatrixParam("right") int right) {
+        ...
+```
+
+これは次のようなリクエストパスに対応する
+
+```
+/addition;left=2;right=3
+```
+
+---
+
+### リクエストヘッダ、Cookie
+
+```java
+@GET
+public String get(
+        @HeaderParam("foo") String foo,
+        @CookieParam("bar") String bar) {
+    ...
+```
+
+これは次のようなHTTPリクエストヘッダに対応する
+
+```
+GET /hoge HTTP/1.1
+Foo: xxx
+Cookie: bar=yyy
+```
+
+---
+
+### フォームコントロールの値
+
+HTMLのform要素から送信される値をマッピングする
+
+```java
+@POST
+@Produces("application/x-www-form-urlencoded")
+public String sayHello(
+        @FormParam("yourName") String name) {
+    ...
+```
+
+これは次のようなフォームコントロールに対応する
+
+```html
+<form method="POST" action="hello">
+  <input type="text" name="yourName">
+  ...
+```
+
+---
+
+### バリューオブジェクトで受け取る
+
+また、これまで紹介したアノテーションを使ったパラメータのマッピングではバリューオブジェクトを利用できる
+
+```java
+public class ValueObject {
+    private final String value;
+    public ValueObject(String value) {
+        this.value = value;
+    }
+    public String getValue() { return value; }
+}
+```
+
+```java
+@GET
+public String get(
+    //引数にバリューオブジェクトを使用できる
+    @QueryParam("value") ValueObject vo) { ... }
+```
+
+---
+
+### 引数に使えるバリューオブジェクト
+
+* Stringの引数をひとつだけ受け取るpublicなコンストラクタを持つクラス
+* Stringの引数をひとつだけ受け取る `valueOf` という名前のstaticファクトリメソッドを持つクラス
+* Stringの引数をひとつだけ受け取る `fromString` という名前のstaticファクトリメソッドを持つクラス
+
+---
+
+### 既存のクラスを引数に使いたい場合
+
+* ライブラリに含まれているクラスなど、コンストラクタや `valueOf`・`fromString`の追加ができない場合
+* `ParamConverter` インターフェースを実装したクラスを用意すればどんなクラスもパラメータとして使える
+
+---
+
+### 例：LocalDateのParamConverter
+
+```java
+public class LocalDateConverter
+        implements ParamConverter<LocalDate> {
+
+    public LocalDate fromString(String value) {
+        //※nullが渡される事があるので注意！
+        return Optional.ofNullable(value)
+                       .map(LocalDate::parse)
+                       .orElse(null);
+    }
+
+    public String toString(LocalDate value) { ... }
+}
+```
+
+---
+
+### エンティティボディを受け取る
+
+引数にアノテーションを付けずエンティティボディをそのまま受け取る事もできる
+
+```java
+@Path("echo")
+public static class Echo {
+    @POST
+    @Consumes("text/plain")
+    public String echo(String text) {
+        return text;
+    }
+}
+```
+
+`@Consumes` ではこのリソースメソッドが受け付けるエンティティのContent-Typeを指定できる
+
+---
+
+### 対応するHTTPリクエスト
+
+これは次のようなHTTPリクエストに対応する
+
+```
+POST /echo HTTP/1.1
+Content-Type: text/plain
+...(略)...
+
+HelloWorld
+```
+
+この場合は引数 `text` には `"HelloWorld"` が渡される
+
+---
+
+### XMLをPOJOで受け取る
+
+エンティティボディがXMLの場合、JAXBでPOJOに変換して受け取る機能が標準装備されている
+
+```java
+@XmlRootElement
+public static class Person {
+    private String name;
+    private int age;
+    //...(アクセサ省略)...
+}
+```
+
+```java
+@Path("person")
+public class PersonApi {
+    @POST
+    @Consumes("application/xml")
+    public void post(Person person) {
+        ...
+```
+
+---
+
+### 対応するHTTPリクエスト
+
+これは次のようなエンティティボディにXMLを含むHTTPリクエストに対応する
+
+```
+POST /person HTTP/1.1
+Content-Type: application/xml
+...(略)...
+
+<person>
+  <name>うらがみ</name>
+  <age>32</age>
+</person>
+```
+
+---
+
+## JSONをPOJOで受け取る
+
+`@Consumes` の中身を `"application/json"` に変えればJSONを受け取る事もできる
+
+```java
+@Path("person")
+public class PersonApi {
+    @POST
+    @Consumes("application/json")
+    public void post(Person person) {
+        ...
+```
+
+---
+
+### 対応するHTTPリクエスト
+
+これは次のようなエンティティボディにJSONを含むHTTPリクエストに対応する
+
+```
+POST /person HTTP/1.1
+Content-Type: application/json
+...(略)...
+
+{"name":"うらがみ","age":32}
+```
+
+*※ただしJSONをPOJOで受け取る機能はJAX-RSの仕様ではなくGlassFishが対応してくれているだけ*
+
+---
+
+### JAX-RSアプリケーションの構成要素
+
+* リソースクラス
+* **フィルター・インターセプター**
+* **エンティティボディの読み込み・書き出し**
+* 例外ハンドラー
+* アプリケーションの定義
+
+* クライアントAPI
+
+---
+
+### リクエストを処理する流れ
+
+![a](./assets/flow00.png)
+
+* 参考：JSR 339 - Appendix C Processing Pipeline
+
+---
+
+### 1. リクエストを受け付ける
+
+![a](./assets/flow01.png)
+
+---
+
+### 2. フィルタリング(マッチング前)
+
+![a](./assets/flow02.png)
+
+* 実行されるリソースメソッドが決定される前
+* `@PreMatching` が付いた `ContainerRequestFilter` の実行
+* HTTPメソッドやリクエストURLの上書きが可能
+
+---
+
+### 例：HTTPメソッドを上書きするContainerRequestFilter
+
+```java
+@Provider
+@PreMatching
+public class PseudoHttpMethodFilter
+        implements ContainerRequestFilter {
+
+    public void filter(ContainerRequestContext rc) throws IOException {
+        String method = rc.getHeaderString(
+                "X-Http-Method-Override");
+        if (method != null) {
+            rc.setMethod(method);
+        }
+    }
+}
+```
+
+---
+
+### 3. リソースメソッドの決定
+
+![a](./assets/flow03.png)
+
+* HTTPメソッドやリクエストパスでリソースメソッドとマッチング
+
+---
+
+### 4. フィルタリング(マッチング後)
+
+![a](./assets/flow04.png)
+
+* ( `@PreMatching` が付いていない)残りの `ContainerRequestFilter` でリクエストをフィルタリング
+
+---
+
+### 5. エンティティボディを加工
+
+![a](./assets/flow05.png)
+
+* `ReaderInterceptor` でエンティティボディをJavaのオブジェクトに加工する前に加工できる
+* 例えば暗号化されたデータの複号化
+
+---
+
+### 例：複号化するReaderInterceptor
+
+```java
+@Provider
+public class Decrypter implements ReaderInterceptor {
+    public Object aroundReadFrom(
+                ReaderInterceptorContext context)
+            throws IOException, WebApplicationException {
+        try {
+            InputStream in = context.getInputStream();
+            Cipher c = ...(略)...
+            context.setInputStream(
+                    new CipherInputStream(in, c));
+            return context.proceed();
+        } catch (GeneralSecurityException e) {
+            throw new InternalServerErrorException(e);
+        }
+    }
+}
+```
+
+---
+
+### 6. エンティティボディの変換
+
+![a](./assets/flow06.png)
+
+* `MessageBodyReader` でエンティティボディをJavaのオブジェクトに変換
+* 先に説明をしたXMLやJSONをPOJOで受け取る仕組みの正体
+
+---
+
+### 例：エンティティボディをPropertiesに変換するMessageBodyReader
+
+```java
+@Provider
+public class PropertiesReader
+        implements MessageBodyReader<Properties> {
+
+    public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+        return true;
+    }
+
+    public Properties readFrom(Class<Properties> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders,
+            InputStream entityStream) throws IOException, WebApplicationException {
+        Properties props = new Properties();
+        props.load(entityStream);
+        return props;
+    }
+}
+```
+
+---
+
+### 7. リソースメソッドを実行
+
+![a](./assets/flow07.png)
+
+---
+
+### 8. レスポンスのフィルタリング
+
+![a](./assets/flow08.png)
+
+* `ContainerResponseFilter` を実行
+* リソースメソッドの戻り値などを見てステータスコードやエンティティボディを変更できる
+
+---
+
+### 例：空のリストだったら204 No Contentを返すContainerResponseFilter
+
+```java
+@Provider
+public class EmptyListToNoContentProvider
+        implements ContainerResponseFilter {
+
+    public void filter(ContainerRequestContext requestContext,
+            ContainerResponseContext responseContext) throws IOException {
+        Object entity = responseContext.getEntity();
+        if (entity instanceof List
+                && ((List<?>) entity).isEmpty()) {
+            responseContext.setStatus(204);
+        }
+    }
+}
+```
+
+---
+
+### 9. 戻り値の変換
+
+![a](./assets/flow09.png)
+
+* `WriterInterceptor` でリソースメソッドの戻り値がエンティティボディに書き出される前にレスポンスを加工できる
+
+---
+
+### 例：暗号化するWriterInterceptor
+
+```java
+@Provider
+public class Encripter implements WriterInterceptor {
+    public void aroundWriteTo(
+                WriterInterceptorContext context)
+            throws IOException, WebApplicationException {
+        try {
+            OutputStream out = context.getOutputStream();
+            Cipher c = ...(省略)...
+            context.setOutputStream(
+                    new CipherOutputStream(out, c));
+            context.proceed();
+        } catch (GeneralSecurityException e) {
+            throw new InternalServerErrorException(e);
+        }
+    }
+}
+```
+
+---
+
+### 10. エンティティボディの書き出し
+
+![a](./assets/flow10.png)
+
+* `MessageBodyWriter` でリソースメソッドの戻り値をエンティティボディに書き出す
+
+---
+
+### 例：Propertiesをエンティティボディに書き出すMessageBodyWriter
+
+```java
+@Provider
+public class PropertiesWriter implements MessageBodyWriter<Properties> {
+
+    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+        return true;
+    }
+
+    public long getSize(Properties t, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+        return -1;
+    }
+
+    public void writeTo(Properties t, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders,
+            OutputStream entityStream) throws IOException, WebApplicationException {
+        t.store(entityStream, "");
+    }
+}
+```
+
+---
+
+### 11. レスポンスを返す
+
+![a](./assets/flow11.png)
+
+---
+
+### JAX-RSアプリケーションの構成要素
+
+* リソースクラス
+* フィルター・インターセプター
+* エンティティボディの読み込み・書き出し
+* **例外ハンドラー**
+* アプリケーションの定義
+
+* クライアントAPI
+
+---
+
+### ExceptionMapper
+
+* リソースメソッドで投げられた例外をハンドリングする
+* ハンドリング対象の例外クラスは型変数で指定する
+
+```java
+@Provider
+public class SQLExceptionMapper implements
+        ExceptionMapper<SQLException> {
+
+    public Response toResponse(SQLException e) {
+        ...(省略)...
+        return Response.serverError().build();
+    }
+}
+```
+
+---
+
+### JAX-RSアプリケーションの構成要素
+
+* リソースクラス
+* フィルター・インターセプター
+* エンティティボディの読み込み・書き出し
+* 例外ハンドラー
+* **アプリケーションの定義**
+
+* クライアントAPI
+
+---
+
+### Application
+
+* JAX-RSアプリケーションの構成を表す
+* `Application` クラスのサブクラスを作ってリソースクラスや各種プロバイダーを返すメソッドをオーバーライドする
+* `@ApplicationPath` で注釈してルートとなるパスを設定する
+
+---
+
+### 例：Applicationサブクラス
+
+```java
+@ApplicationPath("api")
+public class MyApplication extends Application {
+    private final Set<Class<?>> classes = new HashSet<>();
+
+    public MyApplication() {
+        classes.add(Addition.class);
+        classes.add(BasicAuthProvider.class);
+        classes.add(PropertiesReader.class);
+    }
+
+    public Set<Class<?>> getClasses() {
+        return classes;
+    }
+}
+```
+
+---
+
+### Java EE環境でのApplicationサブクラス
+
+* Java EE環境下では `@Path` で注釈されたクラスをリソースクラス、 `@Provider` で注釈されたクラスをプロバイダーと認識して自動で登録してくれる
+* メソッドをオーバーライドしてリソースクラス・プロバイダーを登録する必要が無い
+
+```java
+@ApplicationPath("api")
+public class MyApplication extends Application {
+}
+```
+
+---
+
+### JAX-RSアプリケーションの構成要素
+
+* リソースクラス
+* フィルター・インターセプター
+* エンティティボディの読み込み・書き出し
+* 例外ハンドラー
+* アプリケーションの定義
+
+* **クライアントAPI**
+
+---
+
+## クライアントAPI
+
+* ビルダーパターンで書けるHTTPクライアント
+
+```java
+Client client = ClientBuilder.newClient();
+String result = client.target("http://localhost:8080/account")
+        //クエリパラメータを設定
+        .queryParam("id", "backpaper0").request()
+        //リクエストヘッダを設定
+        .header("X-Client-ID", clientId)
+        //リクエストボディをJSONで送って、
+        //レスポンスボディをStringで受け取る
+        .post(Entity.json(account), String.class);
+```
+
+---
+
+class: center, middle
+
+## ここから実践の話
+
+---
+
+## ※おことわり
+
+* 私の経験をお話するので、すべての人にとって良い方法というわけではありません
+* Jersey、GlassFishに特化したお話もあります
+
+---
+
+### 経験したJAX-RS案件たち
+
+* JAX-RS1, GlassFish3, HTML, Knockout
+* JAX-RS1, GlassFish3, Android
+* JAX-RS2, Tomcat7, Jersey MVC, JSP
+* JAX-RS2, Payara, Android
+
+---
+
+## 実践の話
+
+* 認証
+* バリデーション
+* 宣言的トランザクション
+* 大量データのダウンロード
+* MVCと状態の持ち方
+* テストコード
+
+---
+
+## 実践の話
+
+* **認証**
+* バリデーション
+* 宣言的トランザクション
+* 大量データのダウンロード
+* MVCと状態の持ち方
+* テストコード
+
+---
+
+class: center, middle
+
+## 認証
+
+---
+
+### 認証
+
+* Java EEのレルム認証
+* JAX-RSのフィルターで認証
+
+---
+
+### レルム認証の手順
+
+* アプリケーションサーバ側でレルムの設定を行う
+* `web.xml` で `security-constraint` 要素を書いてURLで認証対象範囲を指定する
+* コードを変更する必要は無い
+
+---
+
+### レルム認証への期待
+
+* アプリケーションサーバに依存しなくて高ポータビリティ
+* デプロイされたすべてのアプリケーションに適用できて高再利用性
+* アプリケーションを変更せず認証ロジックを変更できる
+
+---
+
+### レルム認証の実際……
+
+* アプリケーションサーバを変更する事は無い
+* 1つのWARしかデプロイしない
+* 認証ロジックを変更したい事は無い
+
+あと、サーバー側でレルムの設定をしないといけないので環境を作るのが面倒
+(できれば開発中はアプリケーションのコードをチェックアウトしたらその場で動かしたい)
+
+---
+
+### JAX-RSのフィルターで認証してみる
+
+* `ContainerRequestFilter` で認証を行う
+* 認証対象範囲はアノテーションで指定する
+
+---
+
+### 例：Basic認証するContainerRequestFilter
+
+```java
+@Provider
+public class BasicAuthProvider implements ContainerRequestFilter {
+
+    public void filter(ContainerRequestContext rc) throws IOException {
+        String header = rc.getHeaderString("Authorization");
+        if (authenticate(header) == false) {
+            //認証失敗
+            Response response = Response.status(401)
+                    .header("WWW-Authenticate",
+                            "Basic Realm=secret")
+                    .build();
+            rc.abortWith(response);
+        }
+    }
+    ...(略)...
+}
+```
+
+---
+
+### JAX-RSのフィルターで認証するメリット
+
+* 認証対象範囲をURLではなくアノテーションで指定できる
+  (対象範囲がより明確になる)
+* 認証のロジックはアプリケーション側にあるので「ローカルでとりあえず動かす」がやりやすい
+
+---
+
+### フィルターの適用方法
+
+`@NameBinding` で注釈したアノテーションを用意して、
+
+```java
+@NameBinding
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Protected {
+}
+```
+
+---
+
+### フィルターの適用方法
+
+フィルターとリソースクラスに付けて両者を結びつける
+
+```java
+//フィルター
+@Protected
+@Provider
+public class BasicAuthProvider
+        implements ContainerRequestFilter { ... }
+```
+
+```java
+//リソースクラス
+@Protected
+@Path("hoge")
+public class HogeResource { ... }
+```
+
+---
+
+### 認証まとめ
+
+* レルム認証よりもJAX-RS内で認証する方が楽
+* アノテーションで「このリソースは認証される」という事を明示できる
+
+---
+
+## 実践の話
+
+* 認証
+* **バリデーション**
+* 宣言的トランザクション
+* 大量データのダウンロード
+* MVCと状態の持ち方
+* テストコード
+
+---
+
+### バリデーションはどうすれば良い？
+
+---
+
+### JAX-RSのバリデーション事情
+
+* JAX-RSにはバリデーションの仕様が無い
+* Java EEにはBean Validationというバリデーションの仕様がある
+* Java EE環境であればリソースメソッド実行時に引数に対してBean Validationでバリデーション出来る
+
+---
+
+### 例：引数を直接バリデーションする
+
+```java
+@GET
+public String sayHello(
+        @NotNull @QueryParam("name") String name) {
+    return String.format("Hello, %s!", name);
+}
+```
+
+* `@NotNull` で `name` が `null` でない事をバリデーションする
+
+---
+
+### 例：引数のフィールドをバリデーションする
+
+```java
+@POST
+@Produces(MediaType.APPLICATION_XML)
+public void create(@Valid Person person) { ... }
+```
+
+```java
+@XmlRootElement
+public static class Person {
+
+    @NotNull
+    public String name;
+
+    @Min(0)
+    public int age;
+}
+```
+
+---
+
+### バリデーションでinvalidだった場合
+
+* `ConstraintViolationException` が投げられる
+* そのまま何もしなければ `400 Bad Request` が返される
+* エラーメッセージを返したい場合などは `ExceptionMapper` を使う
+
+---
+
+### 例：エラーメッセージを返すExceptionMapper
+
+```
+@Provider
+public class InvalidMessagesProvider
+        implements ExceptionMapper<ConstraintViolationException> {
+
+    @Override
+    public Response toResponse(ConstraintViolationException e) {
+        //エラーメッセージを , で区切ったものを返す
+        String messages = e.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .collect(Collectors.joining(","));
+        return Response.status(400).entity(messages).build();
+    }
+}
+```
+
+---
+
+### バリデーションまとめ
+
+* Java EE環境ならBean Validationでバリデーションできる
+* エラーメッセージを返したい場合はカスタマイズが必要
+
+※ただし、Bean Validationはいまいち使いづらくて気にいってないのでより良い手を模索中
+
+---
+
+## 実践の話
+
+* 認証
+* バリデーション
+* **宣言的トランザクション**
+* 大量データのダウンロード
+* MVCと状態の持ち方
+* テストコード
+
+---
+
+### 宣言的トランザクションとは
+
+* あるメソッドを呼び出したときにトランザクションを開始
+* メソッドを終了するときにトランザクションをコミット
+* メソッドから例外が投げられたときはロールバック
+
+---
+
+### リソースメソッドで宣言的トランザクションをする方法
+
+1. リソースクラスをCDI管理ビーンにして
+2. `@Transactional` を付けるのが簡単(※JTAとCDIの機能)
+
+なお、リソースクラスをCDI管理ビーンにするには `@RequestScoped` で注釈する。
+
+---
+
+### 例：宣言的トランザクション
+
+```java
+@RequestScoped
+@Transactional
+@Path("sample")
+public class SampleResource {
+    ...(略)...
+```
+
+このクラスに定義されるリソースメソッドはすべて宣言的トランザクションを行う
+
+---
+
+### 例：宣言的トランザクション
+
+```java
+@RequestScoped
+@Path("sample")
+public class SampleResource {
+
+    @Transactional
+    @POST
+    public void create(@FormParam("name") String name) {
+        ...(略)...
+```
+
+`@Transactional` はメソッドに付けても良い
+
+宣言的トランザクションを行うメソッド・行わないメソッドを分ける事ができる
+
+---
+
+### リソースメソッドで宣言的トランザクションをした場合……
+
+* 1リクエスト内で複数のトランザクションを扱いたい場合やそもそもトランザクションを開始したくない場合に面倒
+* 宣言的トランザクションを行うリソースクラスと行わないリソースクラスの混在
+
+---
+
+### 改善案
+
+1. リソースクラスをCDI管理ビーンにして
+2. 宣言的トランザクションを行うCDI管理ビーンを作成し
+3. リソースクラスにインジェクションする
+4. リソースメソッドからはそのクラスのメソッドを呼ぶ
+
+---
+
+### 例：ビジネスロジック
+
+```java
+@ApplicationScoped
+@Transactional
+public class SampleService {
+    ...
+```
+
+ビジネスロジックを切り出したCDI管理ビーンに `@Transactional` を付けてトランザクション境界にする
+
+---
+
+### 例：
+
+```java
+@RequestScoped
+@Path("sample")
+public class SampleResource {
+    @Inject
+    private SampleService service;
+
+    @POST
+    @Consumes("application/xml")
+    public void create(Sample sample) {
+        service.create(sample);
+    }
+}
+```
+
+リソースクラスでは宣言的トランザクションせず、そのCDI管理ビーンをインジェクションして使う
+
+---
+
+### 宣言的トランザクションまとめ
+
+* リソースクラスはトランザクション境界にしない方が良い
+* あくまでもHTTPとJavaコードを繋ぐものと捉える
+* ビジネスロジックはリソースクラス以降のレイヤーにする
+
+---
+
+## 実践の話
+
+* 認証
+* バリデーション
+* 宣言的トランザクション
+* **大量データのダウンロード**
+* MVCと状態の持ち方
+* テストコード
+
+---
+
+### 大量データのダウンロード
+
+* CSVダウンロードなど
+* 素直に書くと、リソースメソッド内で時間をかけて取得した大量データを戻り値にする、という実装になる
+
+---
+
+### コード例
+
+```java
+@GET @Produces("text/csv")
+public Response downloadCsv() {
+
+    // 長い時間がかかり、大量データを扱う処理
+    String csv = createCsv();
+
+    String filename = "sample.csv";
+    return Response.ok(csv).header(
+            HttpHeaders.CONTENT_DISPOSITION,
+            "attachment; filename=" + filename).build();
+}
+```
+
+---
+
+### 問題点
+
+* 長い時間がかかるのでブラウザをローディング状態にしたままでユーザーを待たせてしまう
+* 大量データを扱うのでメモリを圧迫してしまう
+
+---
+
+### 改善案
+
+[究極のファイルダウンロード](http://qiita.com/kawasima/items/2231f607677af31234e7)
+(システムエンジニア Advent Calendar 2015 15日目)
+を参考に、
+
+* 非同期ダウンロード
+* ファイル経由
+
+を実装するのが良さそう
+
+---
+
+### 非同期ダウンロード
+
+非同期ダウンロードとは概ね以下のような感じ。
+
+1. リクエストを受け取るとダウンロード対象となるファイルの生成をワーカーに投げてレスポンスをすぐに返す
+2. クライアントは時間をおいてファイルの生成が終わったか問い合わせる
+3. ファイルの生成が終わっていればあらためてダウンロードをするリクエストを投げる
+
+---
+
+### タスクをワーカーに投げる例
+
+```java
+@POST
+@Consumes("application/x-www-form-urlencoded")
+@Produces("text/plain")
+public String downloadCsv(@FormParam("param") String param) {
+    String downloadKey = ...
+    
+    // 別スレッドで処理を実行する
+    runOtherThread(() -> {
+        String csv = createCsv();
+        //...(省略)...
+    });
+
+    return downloadKey;
+}
+```
+
+---
+
+### でもJava EEでは……
+
+データソースやトランザクションをスレッドに関連付けて管理しているのでカジュアルにスレッドを生成してはいけない。
+
+```java
+private void runOtherThread(Runnable r) {
+    // ×new Threadしてはいけません！
+    new Thread(r).start();
+}
+```
+
+---
+
+### そこで
+
+* Concurrency Utilities for Java EEとCDIを使う
+* Java EE環境で `ExecutorService` を使えるようにする仕様
+* リソースクラスをCDI管理ビーンにして `@Resource` で `ManagedExecutorService` をインジェクションする
+
+---
+
+### 例：ManagedExecutorService
+
+```java
+@RequestScoped
+@Path("csv")
+public class CsvApi {
+
+    @Resource
+    private ManagedExecutorService executor;
+    
+    private void runOtherThread(Runnable r) {
+        executor.submit(r);
+    }
+
+    ...(略)...
+```
+
+これで長い時間がかかる処理を別スレッドで実行できる
+
+---
+
+## ※注意点
+
+* `ManagedExecutorService` が管理するスレッドはリクエストを捌くスレッドではないので `@RequestScoped` の範囲外
+* `@RequestScoped` な情報は非同期タスクをインスタンス化するときに渡す必要がある
+
+---
+
+### ファイル経由
+
+* 少しずつデータをフェッチしながら一時ファイルに書き出す(メモリの節約)
+* あとはファイルをそのままレスポンスで返すだけ
+
+---
+
+### ファイルの返し方
+
+`InputStream`をそのまま返すか……
+
+```java
+@GET
+@Produces("application/force-download")
+public InputStream donwload(@QueryParam("key") String key) throws IOException {
+    Path temporaryFile = findFile(key);
+    return Files.newInputStream(temporaryFile);
+}
+```
+
+---
+
+### ファイルの返し方
+
+`StreamingOutput`を使う方法がある。
+
+```java
+@GET
+@Produces("application/force-download")
+public StreamingOutput donwload(@QueryParam("key") String key) {
+    Path temporaryFile = findFile(key);
+    return out -> Files.copy(temporaryFile, out);
+}
+```
+
+---
+
+### ダウンロードまとめ
+
+* 一時ファイルを経由して非同期ダウンロードを行うのが良さそう
+* Java EE環境だと `ManagedExecutorService` を使う
+
+サンプルコードは後日公開する予定(未定)
+
+---
+
+## 実践の話
+
+* 認証
+* バリデーション
+* 宣言的トランザクション
+* 大量データのダウンロード
+* **MVCと状態の持ち方**
+* テストコード
+
+---
+
+### MVCと状態の持ち方
+
+* 冒頭で述べたようにJAX-RSはRESTful APIを作るのに向いている
+* RESTful APIでは状態を持たない
+* でもテンプレートエンジンと組み合わせて画面有りのアプリケーションを作れない事はない
+* 画面がある業務アプリケーションを作っていると状態を持ちたい事がある
+
+---
+
+### JAX-RSで画面有りのアプリケーションを作る方法
+
+* Jersey MVCを使う
+* テンプレートエンジンを適用する`MessageBodyWriter`を書く
+
+---
+
+### Jersey MVC
+
+* テンプレートエンジンと組み合わせる *Jerseyの独自拡張*
+* テンプレートエンジン部分は抽象化されていてJSPやFreeMarkerなどいくつかのテンプレートエンジンに対応している
+
+---
+
+### Jersey MVCに対する個人の感想
+
+* Jerseyに依存しており他のJAX-RS実装では使えない
+* テンプレートエンジン部分を抽象化している代償にコードが追いにくい
+
+そもそもテンプレートエンジンの適用は大抵コンテキストオブジェクトを作ってテンプレートの`InputStream`と一緒にエンジンに渡す感じなので`MessageBodyWriter`をさくっと書いてしまおう。
+
+---
+
+## MVC 1.0
+
+* Java EE 8には [JSR 371 MVC 1.0](https://www.jcp.org/en/jsr/detail?id=371)が入る予定
+* 参照実装である[Ozark](https://github.com/spericas/ozark)のコードはオレオレMVC部品を作る上でも参考になる
+
+[Java EE 8を先取る](http://backpaper0.github.io/ghosts/jersey-sse-ozark.html)のも良いと思う。
+
+---
+
+### 状態の持ち方
+
+* JAX-RSの仕様にはセッションの概念が無い
+  * リソースクラスのインスタンスはリクエスト毎
+  * フィルターなど各プロバイダはアプリケーション毎
+
+* JAX-RSの仕様外で状態を持つしかない
+
+---
+
+### HttpSessionを使う？
+
+* サーブレットコンテナ上で動かしているならJAX-RSで `HttpServletRequest` を使える
+* `HttpServletRequest` から `HttpSession` を取得して状態を管理できなくはない
+
+---
+
+### コード例
+
+```java
+@Context
+private HttpServletRequest request;
+
+@GET
+public Viewable get() {
+    HttpSession session = request.getSession();
+    String userId = session.getAttribute("userId");
+    return new Viewable("path/to/template", userId);
+}
+```
+
+* `@Context` で `HttpServletRequest` をインジェクションできる
+* 他に `ServletConfig`、`ServletContext`、`HttpServletResponse` もインジェクションできる
+
+---
+
+### ※これはおすすめしません
+
+* ServletはJAX-RSよりも低レイヤーなAPI
+* `HttpSession` への値の登録・取得は型安全ではない
+* 個人的にはJAX-RSでServlet APIを使ったら負け、ぐらいに考えている
+
+---
+
+## おすすめの方法
+
+1. リソースクラスをCDI管理ビーンにして
+2. 状態を保持する `@SessionScoped` なCDI管理ビーンをインジェクションする
+
+---
+
+### 例：リソースクラス
+
+```java
+@RequestScoped
+@Path("sample")
+public class Sample {
+
+    @Inject
+    private UserInfo user;
+
+    @GET
+    public Viewable get() {
+        return new Viewable("path/to/template", user.getId());
+    }
+}
+```
+
+---
+
+### 例：状態を持つクラス
+
+```java
+@SessionScoped
+public class UserInfo implements Serializable {
+
+    private String userId;
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+}
+```
+
+---
+
+### メリット
+
+* 管理する状態に仕様変更があった場合、シグネチャの変更になるのでコンパイルで守られる
+* モックを作成・インジェクションし易く、テストコードが書き易い
+
+---
+
+### MVCと状態まとめ
+
+* Jersey MVCは使いづらいのでオレオレ`MessageBodyWriter`書こう
+* 将来的にはJSR 371でMVCできる
+* 状態はCDIでインジェクションすると良い
+
+---
+
+## 実践の話
+
+* 認証
+* バリデーション
+* 宣言的トランザクション
+* 大量データのダウンロード
+* MVCと状態の持ち方
+* **テストコード**
+
+---
+
+### テストしたい対象
+
+* ルーティング
+* クエリパラメータやフォームパラメータの受け取り
+* エンティティの変換
+* フィルターやインターセプターの適用
+
+---
+
+### Jersey Test Framework
+
+* JUnit、TestNGでJerseyのテストコードを書くためのフレームワーク
+* テスト実行前後にJerseyの起動・終了を行ってくれる
+* クライアントAPIのショートカットを用意
+
+※JAX-RSの仕様ではなく *Jerseyの機能*
+
+---
+
+### 例：Jersey Test Framework
+
+```java
+public class AdditionTest extends JerseyTest {
+    // テスト対象となるアプリケーションの定義
+    protected Application configure() {
+        return new ResourceConfig(Addition.class);
+    }
+
+    @Test
+    public void testCalculate() throws Exception {
+        // クライアントAPIを使って検証
+        int result = target("addition")
+                        .queryParam("a", 1)
+                        .queryParam("b", 2)
+                        .request().get(int.class);
+        assertThat(result, is(3));
+    }
+}
+```
+
+---
+
+### テストしやすいコードのポイント
+
+* ビジネスロジックはCDI管理ビーンに切り出しておく<br/>
+  (テストではモックをインジェクションする)
+* JAX-RSはHTTPとJavaコードのマッピングに徹してビジネスロジックは別のレイヤーで行う事が大切
+
+---
+
+### テスト時のDIについて
+
+* [HK2](https://hk2.java.net/)を利用すると良い
+* HK2とはJerseyが依存しているDIコンテナで[JSR 330](https://jcp.org/en/jsr/detail?id=330)を実装している
+* CDIと同じく `@Inject` でインジェクションができる
+
+---
+
+### 例：リソースクラス
+
+```java
+@RequestScoped
+@Path("todo/{id}")
+public class TodoResource {
+
+    //ここにモックをインジェクションしてテストする
+    @Inject
+    private TodoService service;
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Todo get(@PathParam("id") int id) {
+        return service.find(id);
+    }
+}
+```
+
+---
+
+### コード例
+
+```java
+public class TodoResourceTest extends JerseyTest {
+    @Test
+    public void testGet() { ...(略)... }
+
+    protected Application configure() {
+        Binder binder = new AbstractBinder() {
+            protected void configure() {
+                bind(MockTodoService.class)
+                    .to(TodoService.class);
+            }
+        };
+        return new ResourceConfig(TodoResource.class)
+                        .register(binder);
+    }
+}
+```
+
+---
+
+### DIを伴うテストのポイント
+
+* テストが終わったらインスタンスは破棄されるのでライフサイクルは気にしない
+* 裏を返せばライフサイクルに依存しないコードを書くよう心がける
+* HTTPとのマッピング以上のテストはしない
+
+---
+
+### テストコードまとめ
+
+* Jerseyを使っているならJersey Test Frameworkが便利
+* DIでモックに差し替えやすいように意識する
+* JAX-RSの仕様の範囲でテストしたい事のみテストする
+
+---
+
+## 全体のまとめ
+
+* JAX-RSはRESTful APIを作るのに特化したフレームワーク
+* あくまでもHTTPをJavaコードにマッピングするだけ
+* 他のレイヤーと統合するにはCDI(DIコンテナ)を利用する
+* Jersey Test Frameworkでテストは簡単に書ける
+
+---
+
+## 思ったこと
+
+* JAX-RSだけではカバーできない領域がたくさんある
+* 試行錯誤と工夫でそれらを乗り越えてきた
+* 好きになれるフレームワークを使う事が大切
+* JAX-RS大好き！！！
+
+---
+
+## この資料について
+
+* Author: [@backpaper0](https://github.com/backpaper0)
+* License:  [The MIT License](https://opensource.org/licenses/MIT)
+
+    </textarea>
+    <script src="assets/remark-0.13.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
 </html>

@@ -1,41 +1,322 @@
 <!DOCTYPE html>
-<html lang="ja">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-        <title>Java EE 8を先取る</title>
-        <link rel="stylesheet" href="static/css/reveal.min.css">
-        <link rel="stylesheet" href="static/css/theme/serif.css">
-        <link rel="stylesheet" href="static/lib/css/zenburn.css">
-        <link rel="stylesheet" href="static/revealjs.css" type="text/css" />
-        <link rel="stylesheet" href="serif-adjust.css" type="text/css" />
-    </head>
-    <body>
-        <div class="reveal">
-            <div class="slides">
-                <section data-markdown="jersey-sse-ozark.md"  
-                         data-separator="^---"
-                         data-vertical="^\n\n"  
-                         data-charset="UTF-8"></section>
-            </div>
-        </div>
-        <script src="static/js/jquery.min.js"></script>
-        <script src="static/lib/js/head.min.js"></script>
-        <script src="static/js/reveal.js"></script>
-        <script>
-Reveal.initialize({
-    width: 1024,
-    height: 640,
-    history: true,
-    dependencies: [
-    { src: 'static/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
-    { src: 'static/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
-    { src: 'static/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
-        { src: 'static/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
-    ]
+<html>
+  <head>
+    <title>Java EE 8を先取る</title>
+    <meta charset="utf-8">
+    <style>
+@import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+@font-face {
+    font-family: 'mplus';
+    src: url('assets/mplus-1c-regular.ttf');
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'mplus';
+}
+p, li {
+    font-family: 'mplus';
+    font-size: 1.2em;
+}
+strong {
+    text-decoration: underline;
+}
+li p, li li {
+    font-size: 1em;
+}
+code.remark-inline-code {
+    font-family: 'Ubuntu Mono';
+}
+code.remark-code {
+    font-family: 'Ubuntu Mono';
+    font-size: 1.2em;
+}
+table {
+    border-right: thin solid silver;
+    border-bottom: thin solid silver;
+}
+th, td {
+    border-left: thin solid silver;
+    border-top: thin solid silver;
+}
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Java EE 8を先取る
+
+---
+
+class: center, middle
+
+## Java EE 8新機能
+
+---
+
+## Server-Sent Events (SSE)
+
+* サーバー→クライアントの通知
+* HTTPプロトコルで実現
+
+---
+
+## MVC 1.0
+
+* アクションベースのMVC
+* JAX-RS拡張として提供
+
+---
+
+## その他
+
+* [JSON Binding](https://www.jcp.org/en/jsr/detail?id=367)
+* HTTP/2サポート
+* CDIの強化
+* [Java EE Management API 2.0](https://www.jcp.org/en/jsr/detail?id=373)
+* [Java EE Security API](https://www.jcp.org/en/jsr/detail?id=375)
+
+---
+
+### Java EE 8のリリーススケジュール
+
+[JSR 366](https://www.jcp.org/en/jsr/detail?id=366)より引用
+
+* Q4 2015 Early Draft
+* Q1 2016 Public Review
+* Q3 2016 Proposed Final Draft
+* H1 2017 Final Release
+
+---
+
+class: center, middle
+
+## そんなに待てない！！！
+
+---
+
+class: center, middle
+
+### そこで……
+
+---
+
+class: center, middle
+
+## Jersey SSE Support
+
+JerseyによるServer-Sent Eventsのサポート
+
+![](./assets/jersey_logo.png)
+
+---
+
+class: center, middle
+
+## Ozark
+
+MVC 1.0の参照実装
+
+![](./assets/ozark_logo.jpg)
+
+---
+
+class: center, middle
+
+## ですよ！！！
+
+---
+
+class: center, middle
+
+### もうちょい詳しく
+
+---
+
+## Jersey SSE Support
+
+* JerseyはJAX-RSの参照実装
+* Jersey SSE SupportはJerseyでSSEするための拡張
+* dependenciesに一行足すだけで使える(Gradle)
+
+---
+
+## 例：Jersey SSE
+
+```java
+@RequestScoped
+@Path("sse")
+public class SimpleSSESample {
+    @Resource
+    private ManagedExecutorService executor;
+
+    @GET
+    @Produces(SseFeature.SERVER_SENT_EVENTS)
+    public EventOutput sendEvents() {
+        EventOutput out = new EventOutput();
+        executor.submit(new Task(out));
+        return out;
+    }
+}
+```
+
+---
+
+## 例：Jersey SSE
+
+```java
+class Task implements Callable<Void> {
+    private final EventOutput out;
+    public Task(EventOutput out) { this.out = out; }
+    public Void call() throws Exception {
+        try {
+            for (int i = 0; i < 10; i++) {
+                TimeUnit.SECONDS.sleep(1);
+                OutboundEvent event =
+                        new OutboundEvent.Builder()
+                        .name("message")
+                        .data("Hello " + i).build();
+                out.write(event);
+            }
+            return null;
+        } finally { out.close(); }
+    }
+}
+```
+
+---
+
+## 例：Jersey SSE
+
+クライアント側のコード(JavaScript)
+
+```javascript
+var es = new EventSource('/sample/app/sse');
+es.addEventListener('message', function(event) {
+    console.log(event.data);
 });
-        </script>
-    </body>
+```
+
+---
+
+## 例：Jersey SSE
+
+実行結果
+
+```
+Hello 0
+Hello 1
+Hello 2
+Hello 3
+Hello 4
+Hello 5
+Hello 6
+Hello 7
+Hello 8
+Hello 9
+```
+
+※1秒毎に表示される
+
+---
+
+## 例：Jersey SSE
+
+build.gradleの記述例
+
+```groovy
+dependencies {
+    compile 'org.glassfish.jersey.media:jersey-media-sse:2.22'
+}
+```
+
+---
+
+## Ozark
+
+* JSR 371 MVC 1.0の参照実装
+* Jerseyをベースに作られている
+* JSP、Thymeleaf、mustacheなどのテンプレートに対応
+* dependenciesに一行足すだけで使える(Gradle)
+
+---
+
+## 例：Ozark
+
+```java
+@RequestScoped
+@Path("hello")
+public class HelloController {
+
+    @Inject
+    private Models models;
+
+    @Controller
+    @GET
+    public String sayHello(@QueryParam("name") String name) {
+        models.put("name", name);
+        return "hello.jsp";
+    }
+}
+```
+
+---
+
+## 例：Ozark
+
+```jsp
+<%@ page contentType="text/html; charset=UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<title>Hello</title>
+</head>
+<body>
+    <p>Hello, ${name}!</p>
+</body>
+</html>
+```
+
+---
+
+## 例：Ozark
+
+build.gradleの記述例
+
+```groovy
+dependencies {
+    compile 'org.glassfish.ozark:ozark:1.0.0-m02'
+}
+```
+
+---
+
+## サンプル作ってみました
+
+https://github.com/backpaper0/jersey-sse-ozark-sample
+
+![](./assets/jersey-sse-ozark-sample-screenshot.png)
+
+---
+
+## まとめ
+
+* Java EE 8の新機能の一部は今からでも試せる
+* 素振りをしておくとスムーズに導入できる
+* もしくは、導入しないという判断もしやすい
+
+---
+
+## この資料について
+
+* Author: [@backpaper0](https://github.com/backpaper0)
+* License:  [The MIT License](https://opensource.org/licenses/MIT)
+
+    </textarea>
+    <script src="assets/remark-0.13.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
 </html>
