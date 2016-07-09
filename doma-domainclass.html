@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ドメインクラスの話</title>
+    <meta charset="utf-8">
+    <style>
+@import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+@font-face {
+    font-family: 'mplus';
+    src: url('assets/mplus-1c-regular.ttf');
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'mplus';
+}
+p, li {
+    font-family: 'mplus';
+    font-size: 1.5em;
+}
+li p, li li {
+    font-size: 1em;
+}
+code.remark-inline-code {
+    font-family: 'Ubuntu Mono';
+}
+code.remark-code {
+    font-family: 'Ubuntu Mono';
+    font-size: 1.2em;
+}
+blockquote {
+    font-style: italic;
+}
+    </style>
+  </head>
+  <body>
+    <script src="assets/remark-0.13.min.js"></script>
+    <script>
+        var slideshow = remark.create({
+//            ratio: '16:9',
+            sourceUrl: 'doma-domainclass.md',
+            navigation: {
+                scroll: false
+            },
+//            slideNumberFormat: ''
+        });
+    </script>
+  </body>
+</html>
