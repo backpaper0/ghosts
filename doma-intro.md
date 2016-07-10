@@ -900,7 +900,10 @@ tm.required(() -> {
 
 * エンティティをDAO内で定義したい
 * 主キー検索クエリは自動で組み立てたい
-* SQLファイルは`foo/bar/HogeDao_select.sql`という名前にしたい
+* <del>SQLファイルは`foo/bar/HogeDao_select.sql`という名前にしたい</del>
+
+  * https://twitter.com/glory_of/status/751655497397264384
+  * https://twitter.com/glory_of/status/751656837301170176
 
 ---
 
