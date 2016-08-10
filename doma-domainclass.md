@@ -468,7 +468,7 @@ class: center, middle
 ```sql
 SELECT /*%expand*/*
   FROM Hoge
-//コンパイルエラーになる
+--コンパイルエラーになる
  WHERE foo LIKE /* @prefix(foo) */'x'
 ```
 
@@ -481,7 +481,7 @@ SELECT /*%expand*/*
 ```sql
 SELECT /*%expand*/*
   FROM Hoge
-//内部の露呈
+--内部の露呈
  WHERE foo LIKE /* @prefix(foo.value) */'x'
 ```
 
