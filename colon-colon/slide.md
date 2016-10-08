@@ -134,7 +134,7 @@ Nil.::("b").::("a")
 
 ### リストを構築する`::`
 
-Scalaではメソッド呼び出しの`.`を省略できます。
+Scalaでは単一引数のメソッド呼び出しは`.`を省略できます。
 
 ```scala
 x.and(y) //これを
@@ -148,12 +148,12 @@ x and y //こう書ける
 
 ### リストを構築する`::`
 
-そして、中置演算子の名前の末尾が`:`のメソッドは**右結合**になります。
+そして、中置演算子の名前の末尾が`:`の場合は**右結合**になります。
 
 ```scala
-src :+ listener //これは左結合。src.:+(listener)と同じ
+button :+ listener //これは左結合。button.:+(listener)と同じ
 
-listener +: src //これは右結合。src.+:(listener)と同じ
+listener +: button //これは右結合。button.+:(listener)と同じ
 ```
 
 ---
@@ -163,17 +163,17 @@ listener +: src //これは右結合。src.+:(listener)と同じ
 ```scala
 class Listener
 
-class Src {
+class Button {
   def :+(l: Listener): Unit = {}
   def +:(l: Listener): Unit = {}
 }
 
-val src = new Src()
+val button = new Button()
 val listener = new Listener()
 
-src :+ listener
+button :+ listener
 
-listener +: src
+listener +: button
 ```
 
 ---
@@ -224,7 +224,7 @@ xs match {
 class Point(val x: Int, val y: Int)
 ```
 
-`new Point(12, 34)`として作成した平面座標からパターンマッチでx座標、y座標を取り出してみましょう。
+`new Point(12, 34)`として作成した平面座標からパターンマッチでx座標、y座標を取り出すための定義をしましょう。
 
 ---
 
@@ -413,7 +413,7 @@ class: center, middle
 
 ### まとめ
 
-このようにScalaは値の構築と分解に同じ表現を使えるように仕様が工夫されています。
+今回、値の構築と分解に同じ表現を使えるように仕様が工夫されていることを見ましたが、Scalaは他にも色々な工夫がなされています。
 
 なので、仕様を気にしなければ取っ付きやすいし、仕様を学んで「だからこういう表現ができるのか！」と感動できるタイプの方でも楽しめるのではと思っています。（個人の感想です）
 
