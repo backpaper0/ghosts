@@ -151,29 +151,11 @@ x and y //こう書ける
 そして、中置演算子の名前の末尾が`:`の場合は**右結合**になります。
 
 ```scala
-button :+ listener //これは左結合。button.:+(listener)と同じ
+val xs = Seq(2, 3)
 
-listener +: button //これは右結合。button.+:(listener)と同じ
-```
+xs :+ 4 //これは左結合。xs.:+(4)と同じ
 
----
-
-### リストを構築する`::`
-
-```scala
-class Listener
-
-class Button {
-  def :+(l: Listener): Unit = {}
-  def +:(l: Listener): Unit = {}
-}
-
-val button = new Button()
-val listener = new Listener()
-
-button :+ listener
-
-listener +: button
+1 +: xs //これは右結合。xs.+:(1)と同じ
 ```
 
 ---
