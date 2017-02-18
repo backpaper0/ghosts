@@ -79,6 +79,8 @@ new Vue({
 
 https://github.com/backpaper0/memo-sample
 
+※このサンプルではnpmもwebpackも使わずにscript要素で読み込んでいます
+
 ---
 
 ### サンプルの構成
