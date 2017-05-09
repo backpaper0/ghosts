@@ -10,7 +10,7 @@ n番目の項をF<sub>n</sub>とすると
 
 * F<sub>0</sub> = 0
 * F<sub>1</sub> = 1
-* F<sub>n + 2</sub> = F<sub>n</sub> + F<sub>n - 1</sub> (n >= 0)
+* F<sub>n + 2</sub> = F<sub>n</sub> + F<sub>n + 1</sub> (n >= 0)
 
 となるような数列
 
