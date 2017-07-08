@@ -274,7 +274,7 @@ SELECT id, name, version
    AND name LIKE /* @prefix(name) */'x%'
 /*%if version != null*/
    AND version = /* version */1
-/%end*/
+/*%end*/
 ```
 
 ???
