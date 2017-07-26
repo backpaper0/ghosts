@@ -16,7 +16,6 @@ class: center, middle
 
 それ以来、自分に決定権がある場合はほとんどDomaを使っている。
 ほとんどの場合、自分に決定権がある。
-ちなみにDoma以外だとJPAを使う場合もある。
 
 ---
 
@@ -26,8 +25,7 @@ class: center, middle
 * コンパイル時にコード検証、コード生成
 * 他のJARに依存しない
 * Java 8以降に対応
-* ORMではない
-* あえて言うならResultSet Mapper
+* ORMというよりResultSet Mapper
 * SELECTクエリはSQLファイルを書く
 * 型を大事に
 
@@ -50,7 +48,7 @@ Java 6から入った機能。Processorというインターフェースを実�
 * 機能一巡り
 * ドメインクラス
 * コンパイル時検査
-* インテグレーション
+* その他の話題
 
 ---
 
@@ -89,6 +87,7 @@ Domaの設定を行うクラス。Domaは設定ファイルではなくJavaコ�
 最低限getDataSourceとgetDialectを実装すれば良い。
 
 Dialectはクエリの自動構築などでRDBMSの差異を吸収するためのインターフェース。
+ページネーション、悲観排他ロックなど。
 
 Configは他にも色々な設定ができる。
 
@@ -155,8 +154,6 @@ public interface AccountDao {
 
 ???
 
-**目安：6分**
-
 データベース操作を行うためのインターフェース。
 
 実装クラスはAnnotationProcessorでコンパイル時に生成される。
@@ -214,6 +211,8 @@ Domaで検索クエリを発行する場合、Daoインターフェースに@Sel
 ???
 
 SQLファイルのファイルパスはDaoインターフェースの完全修飾名とメソッド名から決定される。
+
+このパスにSQLファイルが無いと（実行時エラーだけでなく）コンパイルエラーになる。
 
 ---
 
@@ -279,11 +278,15 @@ SELECT id, name, version
 
 ???
 
+**目安：5分**
+
 他にもIterableをIN句にバインドしたり、LIKE用の関数を使ったり、分岐したり、サンプルは書いていないけれどforループしたりできる。
 
 prefix関数は変数をバインドする時に自動で末尾に%をつけてくれる。
 
 ただしifやforなどの制御文はやりすぎ注意。
+
+これら制御構文や式言語もコンパイル時チェックされる。
 
 ---
 
@@ -366,8 +369,6 @@ SELECT /*%expand*/*
 ```
 
 ???
-
-**目安：12分**
 
 結果が0件の場合はemptyになる。
 
@@ -597,11 +598,32 @@ public class Account {
 
 ???
 
-**目安：18分**
-
 update、deleteの場合は@Idが付いたフィールドに対応するカラムをprimary keyと見なしてwhere句を構築する。
 
 また、@Versionで楽観排他制御も行える。
+
+---
+
+### 挿入/更新/削除クエリの自動構築
+
+```java
+@Entity
+public class Account {
+
+    ...
+
+    @OriginalStates
+    Account originalStates;
+}
+```
+
+???
+
+@OriginalStatesを付けた自分自身の型のフィールドを定義しておけば、
+SELECTの時に値を保存しておいて、
+UPDATEの時は保存した値を利用して差分更新ができる。
+
+自前でnewするのではなく、DomaでSELECTした時のみ有効。
 
 ---
 
@@ -618,6 +640,8 @@ INSERT INTO account (id, name)
 ```
 
 ???
+
+**目安：10分**
 
 SQLファイルを利用して挿入/更新/削除を行うことも可能。
 
@@ -755,6 +779,32 @@ PreparedSqlからはプリペアードSQL、プレースホルダが?になっ�
 
 ---
 
+### Domaが出来ないこと
+
+* SELECTクエリの自動生成
+* 親子などの構造を持ったエンティティへのマッピング
+
+```java
+//こういう構造にはマッピング出来ない
+public class Parent {
+    ...
+    List<Child> children;
+}
+
+public class Child { ... }
+```
+
+???
+
+SELECTクエリは必ず書く。
+
+構造を持ったエンティティへのマッピングは出来ない。
+フラットなマッピングしか出来ない。
+
+とはいえ、これらのデメリットはあるが、私にはメリットが上回っている。
+
+---
+
 class: center, middle
 
 ## ドメインクラス
@@ -788,8 +838,6 @@ List<User> users = dao.select(deptId, role);
 ```
 
 ???
-
-**目安：24分**
 
 ---
 
@@ -899,6 +947,8 @@ String city = AddressUtil.extractCity(anotherCity);
 
 ???
 
+**目安：15分**
+
 住所以外のものが渡されてもコンパイル時には気付かない。
 
 実行してみて「何かおかしい」と思うやつ。
@@ -932,10 +982,13 @@ public class Address {
 ### 値オブジェクトの他のメリット
 
 * 引数や戻り値に使っていればシグネチャに現れる
-* Javadocや変数名を見なくてもメソッドの把握がしやすい
-* デバッグ情報無しにコンパイルされて`method(String arg0, String arg)`とかになってると悲惨
 * IDEの補完
-* 型で候補が絞られて素早く補完できる
+
+???
+
+Javadocや変数名を見なくてもメソッドの把握がしやすい。
+
+型で候補が絞られて素早く補完できる。
 
 ---
 
@@ -954,8 +1007,6 @@ public class Address {
 メンバーに対しては「慣れろ」の一言。それでいつまで経ってもメリットを感じてもらえなかったら価値観が異なるということなので違うチームへ行きましょう。
 
 ???
-
-**目安：30分**
 
 ---
 
@@ -1004,6 +1055,24 @@ public final class ValueObject {
 @DomainのfactoryMethod要素にメソッド名を指定すれば、ドメインクラスの生成方法をstaticメソッドにも変更できる。
 
 また、accessorMethod要素にメソッド名を指定すれば、アクセサメソッドもgetValue以外のものに変更できる。
+
+---
+
+### ドメインクラスの作り方
+
+```java
+@Domain(valueType = String.class,
+        factoryMethod = "valueOf",
+        accessorMethod = "name")
+public enum ValueObject {
+
+    FOO, BAR, BAZ
+}
+```
+
+???
+
+enumもドメインクラスにできる。
 
 ---
 
@@ -1114,8 +1183,6 @@ public class SomeEntity {
 
 ???
 
-**目安：36分**
-
 ---
 
 ### Daoメソッドの戻り値が扱えない型だとコンパイルエラー
@@ -1130,6 +1197,10 @@ public interface SomeDao {
     List<InvalidClass> selectAll();
 }
 ```
+
+???
+
+**目安：20分**
 
 ---
 
@@ -1231,8 +1302,6 @@ public class Hoge {
 
 ???
 
-**目安：42分**
-
 ---
 
 ### ドメインクラスに必要なファクトリーメソッドや、アクセサが無いとコンパイルエラー
@@ -1244,29 +1313,39 @@ public class Hoge {
 
 class: center, middle
 
-## インテグレーション
+## その他の話題
 
 ???
 
-Domaは他のライブラリ・フレームワークへの依存が一切無いのでどのフレームワークとも組み合わせられるけれど、組み合わせるための仕組みが用意されていて今すぐDomaが使えるフレームワークを紹介。
+---
+
+### インテグレーション
+
+簡単にDomaと組み合わせられるフレームワークを紹介
+
+???
+
+Domaは他のライブラリ・フレームワークへの依存が一切無いのでどのフレームワークとも組み合わせられるけれど、組み合わせるための仕組みが用意されていて今すぐDomaが使えるフレームワークを2つ紹介。
 
 ---
 
-### Spring Boot
+### Spring Boot 🌿
 
 doma-spring-boot
 
 https://github.com/domaframework/doma-spring-boot
 
+**1.5時間前に1.1.1がリリースされました🎉**
+
 ???
 
-作者は@making。
+作者はPivotalの@making。
 
 今は私もコミッター。
 
 ---
 
-## doma-spring-bootが提供するもの
+### doma-spring-bootが提供するもの
 
 * `Config`のauto configuration
 * Daoをコンテナ管理するためのアノテーション
@@ -1295,15 +1374,19 @@ https://enkan.github.io/reference/components.html#doma2
 
 TIS川島さんが作っているミドルウェアパターンを使ったマイクロウェブフレームワーク。
 
+普段使いしていないので名前の紹介だけ。
+
 ---
 
-## その他の話題
+### 今日話さなかったこと
 
 * 外部ドメイン
 * エンベッダブルクラス
 * ローカルトランザクション
-* プリミティブな調整（`JdbcMappingVisitor`）
+* JDBCの`setXxx`、`getXxx`（`JdbcMappingVisitor`）
 * 拡張ポイント（`QueryImplementors`、`CommandImplementors`）
+* [doma-gen](http://doma-gen.readthedocs.io)
+* Lombokとの併用について
 * 実験的なKotlinサポート
 * IDEプラグイン
   * [Doma Tools(Eclipse)](http://doma.readthedocs.io/ja/stable/getting-started/#eclipse-doma-tools)
@@ -1319,7 +1402,7 @@ TIS川島さんが作っているミドルウェアパターンを使ったマ�
 Java SEで使う場合に有用。
 
 JdbcMappingVisitorはResultSet#getStringやPreparedStatement#setIntなどを行うインターフェース。
-VARCHARでフラグを表現する場合などにカスタマイズする。
+例えば（アンチパターンだろうけど）VARCHARでフラグを表現する場合などにカスタマイズ出来る。
 
 QueryImplementorsはDomaのSQLパーサーが組み立てたクエリのASTを変換できるポイント。
 
@@ -1327,9 +1410,7 @@ CommandImplementersはクエリの発行に処理を差し込めるポイント�
 
 ---
 
-## その他の話題
-
-Doma 3 (WIP)
+### Doma 3 (WIP)
 
 https://github.com/domaframework/doma/pull/198
 
