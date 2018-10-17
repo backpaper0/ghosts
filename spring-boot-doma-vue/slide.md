@@ -1190,17 +1190,6 @@ CSS Grid Layoutはかなりヤバい。
 
 ---
 
-## これから素振りするリポジトリ
-
-https://github.com/backpaper0/spring-boot-doma-vue-sample
-
-???
-ここで素振りしていくので興味がわいた方は見てください。
-
-まあ全く見られていなくても素振りはするんですが。
-
----
-
 ## リンク
 
 [Spring Boot](http://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/)
