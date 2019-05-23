@@ -2,6 +2,8 @@ class: center, middle
 
 # Scalaで足し算する<br>（ただし型レベルで）
 
+[コード例はGistに置いています](https://gist.github.com/backpaper0/a8e71dd3e3952177f8a2423ce2215f9a)
+
 ---
 
 ## 目次
@@ -895,3 +897,5 @@ class: center, middle
 - 型で表現した論理値や整数はimplicit parameterで実行時の値に変換して確認ができる
 - 二つの型引数を取る型は中置演算子のように書ける仕様を利用して論理演算や足し算を表現
 - 掛け算、引き算、割り算にチャレンジしてみよう！
+
+[コード例はGistに置いています](https://gist.github.com/backpaper0/a8e71dd3e3952177f8a2423ce2215f9a)
