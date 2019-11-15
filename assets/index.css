@@ -56,3 +56,13 @@ td {
 .remark-slide-content {
   background-size: contain;
 }
+
+.remark-inline-code {
+  color: maroon;
+  background-color: #EEEEEE;
+}
+
+strong {
+  font-weight: bold;
+  font-size: 28px;
+}
