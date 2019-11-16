@@ -84,7 +84,8 @@ public class Parser {
     //以下略
 ```
 
-この`Parser`クラスは前述の通り`Tokenizer`クラスに依存しています。
+例として引き続き`Parser`クラスを見ていきましょう。
+`Parser`クラスは前述の通り`Tokenizer`クラスに依存しています。
 
 ---
 
@@ -96,8 +97,7 @@ public class Parser {
     //以下略
 ```
 
-フィールド`tokenizer`を宣言と同時に初期化しています。
-
+フィールド`tokenizer`は宣言と同時に初期化されていますね。
 `Tokenizer`クラスのインスタンスは`Parser`クラス内部で生成されており「注入」されていません。
 
 これをコンストラクタを通じて「注入」するコードへ変更してみましょう。
@@ -144,7 +144,9 @@ public class Parser {
 
 ## 「注入」とは何なのか
 
-「注入するコード」の方は`Tokenizer`クラスの実装を隠せることがポイントです。
+「注入するコード」の方はコンストラクタが増えた分、コード量も増えていますね。
+
+ただし、そのおかげで`Tokenizer`クラスの実装が何なのかを隠せるようになりました。
 
 言い換えると`Tokenizer`クラスのサブクラスを渡すことができるということです。
 
@@ -152,7 +154,7 @@ public class Parser {
 
 ## 「注入」とは何なのか
 
-これはテスト時にモックに差し替えたり、ラッパークラスを作ってログ出力を差し込めるメリットがあります。
+これはラッパークラスを作ってログ出力を差し込めたり、テスト時にモックに差し替えられるメリットがあります。
 
 ```java
 //LoggingTokenizerはTokenizerのサブクラス
@@ -170,9 +172,80 @@ assertEquals(expected, parser.parse());
 
 ---
 
-## Java標準ライブラリに見るDI
+## 「注入」とは何なのか
 
-- DIはごく普通のクラス設計手法
+「注入」しないコードでは、コードの書き換え無しにサブクラスで置き換えることができません。
+
+```java
+//注入しないコード
+public class Parser {
+    //テストを実行するたびに書き換える……？
+    //private Tokenizer tokenizer = new Tokenizer();
+    private Tokenizer tokenizer = new MockTokenizer();
+    //以下略
+```
+
+---
+
+## 「DI」とは何なのか？
+
+ここまで「依存」と「注入」の説明をしました。
+
+ここで「DI」とは何なのかまとめましょう。
+
+---
+
+## 「DI」とは何なのか？
+
+「DI」とは
+
+**あるクラスが使用する他のクラスのインスタンスをコンストラクタなどを通じて外部から渡すようなクラス設計**
+
+です。
+
+---
+
+## 「DI」とは何なのか？
+
+これはつまり
+
+**ごく普通のJavaクラス設計**
+
+だと言えます。
+
+---
+
+## 例：java.io.PrintWriter
+
+`java.io.PrintWriter`を例にとってみましょう。
+`PrintWriter`には`java.io.Writer`を受け取るコンストラクタがあります。
+
+```java
+public PrintWriter(Writer out)
+```
+
+`java.io.FileWriter`を注入するとファイルに書き出す`PrintWriter`になりますし、`java.io.StringWriter`を注入するとインメモリに書き出して`String`で取り出せる`PrintWriter`になります。
+
+---
+
+## 例：java.io.PrintWriter
+
+```java
+try (FileWriter out = new FileWriter(new File("out.txt"));
+        PrintWriter writer = new PrintWriter()) {
+    writer.println("hello world");
+    writer.flush();
+}
+```
+
+```java
+StringWriter out = new StringWriter();
+try (PrintWriter writer = new PrintWriter(out)) {
+    writer.println("hello world");
+    writer.flush();
+}
+String text = out.toString();
+```
 
 ---
 
