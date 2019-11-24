@@ -19,5 +19,5 @@ DIコンテナが何なのか、どう役立つのかを知りたい人
 
 ## スライド
 
-https://backpaper0.github.io/jjug-ccc-2019-fall-dicontainer/index.html
+https://backpaper0.github.io/ghosts/dicontainer/
 
