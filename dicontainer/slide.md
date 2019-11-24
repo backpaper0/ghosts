@@ -247,7 +247,7 @@ public PrintWriter(Writer out)
 
 ```java
 try (FileWriter out = new FileWriter(new File("out.txt"));
-        PrintWriter writer = new PrintWriter()) {
+        PrintWriter writer = new PrintWriter(out)) {
     writer.println("hello world");
     writer.flush();
 }
