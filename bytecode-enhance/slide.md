@@ -23,3 +23,9 @@ class: center, middle
 - DIコンテナ経験：
   - Seasar2 / CDI / Guice / HK2 / Spring
 
+---
+
+- インターセプター
+- 動的にサブクラスが生成される
+- スコープとproxy
+- コンストラクタとシリアライズ
