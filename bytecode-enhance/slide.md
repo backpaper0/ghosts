@@ -365,7 +365,7 @@ CDIではClient proxyと呼ばれるクラスが生成される
 ## 単なるサブクラスのイメージ
 
 ```java
-public class HelloProxy extends Hello {
+public class HelloSubclass extends Hello {
     public void say() {
         super.say();
     }
