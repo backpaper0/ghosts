@@ -4,22 +4,56 @@ class: center, middle
 
 ---
 
-## 自己紹介
+## 裏面とは
 
-- 名前：うらがみ
-- SNSアカウント：backpaper0
-- 所属企業：TIS株式会社
-- 2020年1月末に採用イベントやります。来てね
+> りめん<br/>
+> 【裏面】
+> 
+> 表面に対し、その裏の面。「注意事項は―参照」。物事の表に現れない、かげの面。
 
 ---
 
-## 概要
+## connpassに載せた概要
 
 裏面と題した本セッションではDIコンテナを支える技術であるバイトコードエンハンスを中心にお話します。
 
 なお、[表面はこちら](https://jjug-cfp.cfapps.io/submissions/a5ba98a8-bad4-4122-bd61-85f89716c81e)。
 
 裏面からもDIコンテナへ入門しましょう！
+
+---
+
+## connpassに載せた自己紹介
+
+GitHub: @backpaper0
+
+人生の本業はゼルダの伝説 ブレス オブ ザ ワイルド。合間を縫ってプログラマーをやっています。
+
+---
+
+## 自己紹介
+
+.center[
+<iframe width="560" height="315" src="https://www.youtube.com/embed/erkXuoYyjy8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+]
+
+---
+
+## 自己紹介
+
+.center[
+<iframe width="560" height="315" src="https://www.youtube.com/embed/4kGxOPTJIrQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+]
+
+---
+
+## ついでの情報
+
+- 名前：うらがみ
+- 所属企業：TIS株式会社
+- 2020年1月末に採用イベントやります。来てね
+- DIコンテナ経験：
+  - Seasar2 / CDI / Guice / HK2 / Spring
 
 ---
 
@@ -30,11 +64,6 @@ class: center, middle
 ---
 
 ## バイトコードエンハンス
-
-どこで使われている技術なのか？
-
-- AOP
-- スコープ
 
 バイトコードエンハンスってなに？
 
@@ -119,6 +148,8 @@ od -t x1 Calc.class
 
 ## クラスファイルを見てみる
 
+さすがにきついので`javap`を使う
+
 ```sh
 javap -v Calc
 ```
@@ -126,8 +157,6 @@ javap -v Calc
 [ページに収まらないのでGistに貼り付けた](https://gist.github.com/backpaper0/eefeb6c842e4c951322224a43e2a7ec3)
 
 ---
-
-## Javaコードとオペコードを見比べる
 
 ```java
     public int add(int a, int b) {
@@ -147,11 +176,24 @@ javap -v Calc
          3: ireturn
       LineNumberTable:
         line 3: 0
+      LocalVariableTable:
+        Start  Length  Slot  Name   Signature
+            0       4     0  this   LCalc;
+            0       4     1     a   I
+            0       4     2     b   I
 ```
 
 ---
 
-- 参考資料：[JVM入門  -Javaプログラムが動く仕組み-](https://speakerdeck.com/sammy7th/jvmru-men-javapuroguramugadong-kushi-zu-mi)
+## 参考資料
+
+- [The Java Virtual Machine Specification](https://docs.oracle.com/javase/specs/jvms/se13/html/)
+- [JVM入門  -Javaプログラムが動く仕組み-](https://speakerdeck.com/sammy7th/jvmru-men-javapuroguramugadong-kushi-zu-mi)
+
+---
+
+## バイトコードをエンハンスする方法
+
 - バイトコードはクラスローダーでロードされる
 - バイトコードエンハンスはバイトコードを動的に書き出してクラスローダーにロードさせる技術
 - DIコンテナは既にあるバイトコードを改変するのではなくサブクラスを書き出す方式が多い（それに対してJMockitはInstrumentation APIを使用して既にあるバイトコードを改変する）
@@ -186,8 +228,6 @@ public interface Advice {
 
 ```java
 public class LoggingInterceptor implements MethodInterceptor {
-
-    @Override
     public Object invoke(MethodInvocation inv) throws Throwable {
         System.out.printf("begin: %s%n", inv.getMethod());
         Object ret = inv.proceed();
@@ -264,17 +304,9 @@ class HelloEnhance extends Hello {
 
 ---
 
-## 実際にエンハンスされたバイトコードを見る
+## エンハンスされたバイトコードを見るには
 
 `org.springframework.cglib.core.AbstractClassGenerator`の`generate`メソッドでエンハンスしたバイトコードを`byte[]`形式で得ているのでデバッグしてファイルに落として`javap`すると良い
-
----
-
-## バイトコードエンハンスとスコープ
-
-AOPの実現イメージはわかった。
-
-スコープでも利用されているとはどういうこと？
 
 ---
 
@@ -288,10 +320,8 @@ class: center, middle
 
 ```java
 public class SessionObj {
-
     @Inject
     private RequestObj ro;
-
     public void action() {
         ro.process();
     }
@@ -321,7 +351,7 @@ public class RequestObj {
 
 ## 疑問
 
-何も問題はなさそう。
+何も問題はなさそう
 
 では、2つのリクエストがほぼ同時に来た場合はどうなるのか？
 
@@ -339,6 +369,12 @@ public class RequestObj {
 1. HTTPリクエストBを受け取る
 1. `RequestObj`のインスタンスを作成する
 1. `SessionObj`に`RequestObj`をインジェクションする……！？
+
+---
+
+## 処理の流れ（イメージ）
+
+![](./assets/flow1.png)
 
 ---
 
@@ -402,10 +438,8 @@ SpringやCDIはこの形式
 
 ```java
 public class SessionObj {
-
     @Inject
     private RequestObj ro;
-
     public void action() {
         ro.process();
     }
@@ -434,9 +468,15 @@ public class RequestObj {
 
 ---
 
+## 処理の流れ（イメージ）
+
+![](./assets/flow2.png)
+
+---
+
 ## コンストラクタインジェクションに関する疑問
 
-次のようなコンストラクタインジェクションをしているクラスがあるとする。
+次のようなコンストラクタインジェクションをしているクラスがあるとする
 
 ```java
 public class Foo {
@@ -453,6 +493,8 @@ public class Foo {
 ---
 
 ## Proxyのイメージ
+
+Proxyは次のようになる
 
 ```java
 public class FooProxy extends Foo {
@@ -479,6 +521,8 @@ public class FooProxy extends Foo {
 
 マジで何を渡せばいいのかわからない……
 
+とても気になって調べた
+
 ---
 
 ## 答え
@@ -497,7 +541,67 @@ Javaの仕様的にコンストラクタを呼ばずにインスタンス化で�
 
 それはデシリアライズ
 
+バイト配列からデシリアライズでインスタンスを復元する時、コンストラクタは呼ばれない
+
+---
+
+## デシリアライズを試す
+
+```java
+class Obj implements Serializable {
+    public Obj() {
+        System.out.println("new Obj()");
+        System.out.println(this);
+    }
+}
+```
+
+---
+
+## デシリアライズを試す
+
+```java
+public static void main(final String[] args) throws Exception {
+    var obj1 = new Obj();
+
+    System.out.println("Serialize");
+    var baos = new ByteArrayOutputStream();
+    var oos = new ObjectOutputStream(baos);
+    oos.writeObject(obj1);
+
+    System.out.println("Deserialize");
+    var bs = baos.toByteArray();
+    var bais = new ByteArrayInputStream(bs);
+    var ois = new ObjectInputStream(bais);
+    var obj2 = (Obj) ois.readObject();
+
+    System.out.println(obj1);
+    System.out.println(obj2);
+}
+```
+
+---
+
+## デシリアライズを試す
+
+```none
+new Obj()
+com.example.Obj@1e81f4dc
+Serialize
+Deserialize
+com.example.Obj@1e81f4dc
+com.example.Obj@17d99928
+```
+
+---
+
+## デシリアライズを利用してインスタンス化
+
 SpringはObjenesisというライブラリを使用してProxyをインスタンス化している
+
+Objenesisはクラスをインスタンス化するためのライブラリ
+
+典型的な使用例としてProxyが挙げられている
 
 ---
 
@@ -521,7 +625,7 @@ class: center, middle
 ## まとめ
 
 - バイトコードとはクラスファイルの中身を指す
-- 動的にバイトコードを書き出す技術をバイトコードエンハンスと呼ぶ
+- バイトコードエンハンスとは動的にバイトコードを書き出す技術（Seasar2由来な気がする）
 - DIコンテナが持つ機能のいくつかはバイトコードエンハンスの上に成り立っている
 - モダンなDIコンテナはProxyによってスコープを気にすることなくインジェクションできる
 
@@ -529,6 +633,7 @@ class: center, middle
 
 ## まとめ
 
-このように裏側を覗き込むと面白い世界が広がっている
+このように裏面を覗き込むと面白い世界が広がっている
 
-是非とも裏側まで楽しもう！
+是非とも裏面まで楽しもう！
+
