@@ -2,6 +2,20 @@ class: center, middle
 
 # DIコンテナ入門<br/>（裏面）
 
+うらがみの写真はNGでお願いします🙇</br>
+スライドの写真はご自由にどうぞ！
+
+---
+
+class: center, middle
+
+count: false
+
+# DIコンテナ入門<br/>（裏面）
+
+うらがみの写真はNGでお願いします🙇</br>
+スライドの写真はご自由にどうぞ！
+
 ---
 
 ## 裏面とは
@@ -34,15 +48,8 @@ GitHub: @backpaper0
 ## 自己紹介
 
 .center[
-<iframe width="560" height="315" src="https://www.youtube.com/embed/erkXuoYyjy8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-]
-
----
-
-## 自己紹介
-
-.center[
-<iframe width="560" height="315" src="https://www.youtube.com/embed/4kGxOPTJIrQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="448" height="252" src="https://www.youtube.com/embed/erkXuoYyjy8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="448" height="252" src="https://www.youtube.com/embed/4kGxOPTJIrQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 ]
 
 ---
@@ -628,10 +635,6 @@ class: center, middle
 - バイトコードエンハンスとは動的にバイトコードを書き出す技術（Seasar2由来な気がする。あまり一般的な言葉ではないかも）
 - DIコンテナが持つ機能のいくつかはバイトコードエンハンスの上に成り立っている
 - モダンなDIコンテナはProxyによってスコープを気にすることなくインジェクションできる
-
----
-
-## まとめ
 
 このように裏面を覗き込むと面白い世界が広がっている
 
