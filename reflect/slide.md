@@ -8,10 +8,6 @@ class: center, middle
 
 * うらがみ⛄️
 * Javaとゼルダの伝説 ブレス オブ ザ ワイルドを愛するプログラマー
-* TIS株式会社所属。今度イベントやります（露骨な宣伝）<br/>
-  [エンジニアのキャリアと働き方を語る会＠大阪](https://tiw.connpass.com/event/141464/)
-
-![](./assets/QR_Code1566179435.png)
 
 ---
 

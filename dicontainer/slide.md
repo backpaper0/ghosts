@@ -30,7 +30,6 @@ DIコンテナが何なのか、どう役立つのかを知りたい人
 
 - 名前：うらがみ
 - SNSアカウント：backpaper0
-- 所属企業：TIS株式会社
 - コミュニティ：関西Javaエンジニアの会（関Java）
 - DIコンテナ経験：
   - Seasar2 / CDI / Guice / HK2 / Spring

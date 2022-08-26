@@ -46,8 +46,6 @@ GitHub: @backpaper0
 ## ついでの情報
 
 - 名前：うらがみ
-- 所属企業：TIS株式会社
-- 2020年1月末に採用イベントやります。来てね
 - DIコンテナ経験：
   - Seasar2 / CDI / Guice / HK2 / Spring
 
